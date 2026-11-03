@@ -69,6 +69,10 @@ Then open <http://localhost:5173>.
 `python -m scripts.train` is optional, because the trained model is committed in `backend/artifacts/`. Retraining gives
 the same `model_version` and the same scores.
 
+If `pip install` fails with a "No such file or directory" error on Windows, the project folder is nested too deeply.
+scikit-learn has long file paths, and Windows limits paths to 260 characters unless long paths are enabled. Move the
+project to a shorter path.
+
 ### If your machine restricts PowerShell scripts
 
 `Activate.ps1` and `npm.ps1` are scripts, so some policies block them. You don't need to change a policy:
