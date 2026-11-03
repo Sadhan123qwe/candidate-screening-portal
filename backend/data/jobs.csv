@@ -1,0 +1,11 @@
+job_id,title,description,required_skills,preferred_skills,minimum_experience_years
+J001,React Frontend Intern,Build and maintain react frontend features with code review and testing.,javascript;react;html;css,typescript;git;tailwind,0.5
+J002,Next.js Developer Intern,Build and maintain next.js developer features with code review and testing.,javascript;react;nextjs,typescript;postgresql;git,1
+J003,Python Backend Intern,Build and maintain python backend features with code review and testing.,python;fastapi;sql,postgresql;docker;git,0.5
+J004,Node.js Backend Intern,Build and maintain node.js backend features with code review and testing.,javascript;nodejs;sql,express;postgresql;docker,1
+J005,Full Stack Intern,Build and maintain full stack features with code review and testing.,javascript;react;nodejs;sql,typescript;git;docker,0.5
+J006,ML Engineering Intern,Build and maintain ml engineering features with code review and testing.,python;pandas;scikit-learn,numpy;sql;fastapi,0.5
+J007,Data Analytics Intern,Build and maintain data analytics features with code review and testing.,python;sql;pandas,numpy;matplotlib;excel,0
+J008,React Native Intern,Build and maintain react native features with code review and testing.,javascript;react-native;react,typescript;git;rest-api,0.5
+J009,QA Automation Intern,Build and maintain qa automation features with code review and testing.,python;testing;selenium,sql;git;rest-api,0
+J010,DevOps Intern,Build and maintain devops features with code review and testing.,linux;git;docker,python;ci-cd;aws,1

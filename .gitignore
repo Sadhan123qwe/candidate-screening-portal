@@ -1,0 +1,26 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+
+# Local configuration: secrets never go in git
+.env
+.env.local
+
+# Database files and backups are runtime data, not source
+backend/storage/*.db
+backend/storage/*.db-wal
+backend/storage/*.db-shm
+backend/storage/backups/
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

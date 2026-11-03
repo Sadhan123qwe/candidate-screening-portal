@@ -1,0 +1,26 @@
+# Versions are pinned so a reviewer's install matches what was tested.
+
+# API
+fastapi==0.162.0        # >=0.121 is required: Depends(scope="function") commits before the response is sent
+uvicorn[standard]==0.54.0
+pydantic[email]==2.14.2
+pydantic-settings==2.16.2
+
+# Storage
+SQLAlchemy==2.0.55
+alembic==1.20.1
+psycopg[binary]==3.3.7  # only used when DATABASE_URL points at PostgreSQL
+
+# Auth
+PyJWT==2.15.1
+bcrypt==5.0.0
+
+# Machine learning
+pandas==3.1.0
+scikit-learn==1.9.1     # model.joblib must be loaded by the same version that trained it
+joblib==1.6.0
+matplotlib==3.11.2      # confusion_matrix.png only
+
+# Tests and scripts/persistence_check.py
+pytest==9.2.0
+httpx==0.28.1
