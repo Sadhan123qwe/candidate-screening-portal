@@ -31,8 +31,10 @@ Every non-obvious choice and the reason for it. Newest thinking is grouped by to
   straight to the database, and the unique constraint decides which of two simultaneous requests wins.
 - **SQLAlchemy's `version_id_col` for optimistic locking.** Every UPDATE gets `WHERE version = ?`. `assert_version`
   catches a client holding an old copy, and the WHERE clause catches two requests that passed that check together.
-- **`updated_at` is set by hand when anything changes.** Skills live in other tables, so editing only skills would
-  otherwise not touch the parent row or bump its version, and a concurrent edit could overwrite it.
+- **`mark_row_changed` forces the parent's UPDATE when anything changes.** Skills live in other tables, so editing only
+  skills would otherwise not touch the parent row or bump its version, and a concurrent edit could overwrite it. Setting
+  `updated_at` alone was not enough. The test suite caught this: Windows' clock can return the same time twice, so the
+  value didn't change and SQLAlchemy skipped the UPDATE. `flag_modified` makes it unconditional.
 - **pysqlite's default transaction behaviour is kept.** It starts a transaction at the first write, not the first read.
   So a request's first write waits on `busy_timeout` instead of failing, because it never has to upgrade a stale read
   snapshot to a write lock. The cost is that reads before the first write aren't in the transaction, which is why

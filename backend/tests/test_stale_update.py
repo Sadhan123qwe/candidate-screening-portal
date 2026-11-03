@@ -1,5 +1,7 @@
 """An update based on an old copy of a row gets a 409 and changes nothing."""
 
+from datetime import datetime
+
 
 def test_stale_status_update_is_refused_and_data_is_unchanged(client, auth_headers, make_application):
     application = make_application()
@@ -53,6 +55,35 @@ def test_changing_only_skills_still_bumps_the_version(client, auth_headers, make
     assert response.status_code == 200
     assert response.json()["version"] == candidate["version"] + 1
     assert response.json()["skills"] == ["python", "sql"]
+
+
+def test_version_bumps_even_if_the_clock_returns_the_same_time(client, auth_headers, make_candidate, make_job, monkeypatch):
+    """Regression: on Windows, two writes can land in one clock tick.
+
+    updated_at then gets an identical value, SQLAlchemy sees no change and sends no
+    UPDATE, so the version stays put and a concurrent edit could overwrite this one.
+    """
+    candidate = make_candidate(skills=["python"])
+    job = make_job(required_skills=["python"], preferred_skills=[])
+    frozen = datetime.fromisoformat(candidate["updated_at"])
+    monkeypatch.setattr("app.services.common.utcnow", lambda: frozen)
+
+    candidate_update = client.patch(
+        f"/api/candidates/{candidate['id']}",
+        json={"version": candidate["version"], "skills": ["python", "sql"]},
+        headers=auth_headers,
+    )
+
+    assert candidate_update.json()["version"] == candidate["version"] + 1
+
+    frozen = datetime.fromisoformat(job["updated_at"])
+    job_update = client.patch(
+        f"/api/jobs/{job['id']}",
+        json={"version": job["version"], "required_skills": ["python", "sql"]},
+        headers=auth_headers,
+    )
+
+    assert job_update.json()["version"] == job["version"] + 1
 
 
 def test_stale_delete_is_refused_when_a_version_is_sent(client, auth_headers, make_candidate):

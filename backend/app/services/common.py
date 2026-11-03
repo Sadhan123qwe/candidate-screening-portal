@@ -3,10 +3,11 @@
 from typing import TypeVar
 
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.orm.exc import StaleDataError
 
 from app.errors import not_found, stale_update
-from app.models import Application, Candidate, Job
+from app.models import Application, Candidate, Job, utcnow
 
 SoftDeletable = TypeVar("SoftDeletable", Application, Candidate, Job)
 
@@ -37,6 +38,18 @@ def flush_checking_version(db: Session) -> None:
     except StaleDataError:
         db.rollback()
         raise stale_update() from None
+
+
+def mark_row_changed(entity: Candidate | Job) -> None:
+    """Force an UPDATE, and so a version bump, even if no column on this row changed.
+
+    Skills live in separate tables, so editing only skills wouldn't touch the parent
+    row, and a concurrent edit could then overwrite it. Setting updated_at isn't enough
+    alone: the clock can return the same value twice in quick succession (Windows' clock
+    ticks coarsely), and SQLAlchemy skips the UPDATE when a value is unchanged.
+    """
+    entity.updated_at = utcnow()
+    flag_modified(entity, "updated_at")
 
 
 def changed_fields(before: dict, after: dict) -> set[str]:

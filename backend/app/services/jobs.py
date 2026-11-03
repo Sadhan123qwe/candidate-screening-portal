@@ -9,7 +9,7 @@ from app.schemas import JobCreate, JobUpdate
 from app.services import skills as skill_service
 from app.services.applications import soft_delete_applications_of
 from app.services.audit import record_audit, snapshot_job
-from app.services.common import assert_version, changed_fields, flush_checking_version, get_active
+from app.services.common import assert_version, changed_fields, flush_checking_version, get_active, mark_row_changed
 from app.services.predictions import refresh_predictions
 
 FIELDS_AFFECTING_PREDICTIONS = {"required_skills", "preferred_skills", "min_experience_years"}
@@ -72,8 +72,7 @@ def update_job(db: Session, job_id: int, payload: JobUpdate, user: User) -> Job:
     if not changed:
         return job
 
-    # Setting this forces an UPDATE (and a version bump) even when only skills changed.
-    job.updated_at = utcnow()
+    mark_row_changed(job)
     flush_checking_version(db)
 
     if changed & FIELDS_AFFECTING_PREDICTIONS:

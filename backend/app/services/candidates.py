@@ -10,7 +10,7 @@ from app.schemas import CandidateCreate, CandidateUpdate
 from app.services import skills as skill_service
 from app.services.applications import soft_delete_applications_of
 from app.services.audit import record_audit, snapshot_candidate
-from app.services.common import assert_version, changed_fields, flush_checking_version, get_active
+from app.services.common import assert_version, changed_fields, flush_checking_version, get_active, mark_row_changed
 from app.services.predictions import refresh_predictions
 
 # Only these change what the model sees, so only these trigger a rescore.
@@ -89,9 +89,7 @@ def update_candidate(db: Session, candidate_id: int, payload: CandidateUpdate, u
     if not changed:
         return candidate
 
-    # Setting this forces an UPDATE (and a version bump) even when only skills
-    # changed, since skills live in a separate table.
-    candidate.updated_at = utcnow()
+    mark_row_changed(candidate)
     try:
         flush_checking_version(db)
     except IntegrityError:
