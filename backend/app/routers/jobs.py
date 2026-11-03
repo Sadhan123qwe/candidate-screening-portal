@@ -13,6 +13,12 @@ from app.services.presenters import application_counts_by_job, to_job_out
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
 
 
+@router.get("")
+def list_jobs(db: DbSession, _user: CurrentUser) -> list[JobOut]:
+    counts = application_counts_by_job(db)
+    return [to_job_out(job, counts.get(job.id)) for job in job_service.list_jobs(db)]
+
+
 @router.post("", status_code=201)
 def create_job(payload: JobCreate, db: DbSession, user: CurrentUser) -> JobOut:
     return to_job_out(job_service.create_job(db, payload, user))

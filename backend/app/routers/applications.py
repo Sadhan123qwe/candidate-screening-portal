@@ -1,16 +1,44 @@
 """Application endpoints. Business logic lives in app/services/applications.py."""
 
-from fastapi import APIRouter
+from typing import Annotated
+
+from fastapi import APIRouter, Query
 
 from app.auth import CurrentUser
 from app.db import DbSession
-from app.models import Application
-from app.schemas import ApplicationCreate, ApplicationDetail, ApplicationOut, StatusHistoryOut, StatusUpdate
+from app.models import Application, ApplicationStatus
+from app.schemas import (
+    ApplicationCreate,
+    ApplicationDetail,
+    ApplicationOut,
+    ApplicationPage,
+    StatusHistoryOut,
+    StatusUpdate,
+)
 from app.services import applications as application_service
 from app.services.common import get_active
 from app.services.presenters import to_application_detail, to_application_out, to_status_history_out
 
 router = APIRouter(prefix="/api/applications", tags=["applications"])
+
+
+@router.get("")
+def list_applications(
+    db: DbSession,
+    _user: CurrentUser,
+    job_id: int | None = None,
+    status: ApplicationStatus | None = None,
+    search: str | None = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 25,
+) -> ApplicationPage:
+    items, total = application_service.list_applications(db, job_id, status, search, page, page_size)
+    return ApplicationPage(
+        items=[to_application_out(application) for application in items],
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.post("", status_code=201)

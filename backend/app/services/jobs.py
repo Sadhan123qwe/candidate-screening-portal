@@ -15,6 +15,10 @@ from app.services.predictions import refresh_predictions
 FIELDS_AFFECTING_PREDICTIONS = {"required_skills", "preferred_skills", "min_experience_years"}
 
 
+def list_jobs(db: Session) -> list[Job]:
+    return list(db.scalars(select(Job).where(Job.deleted_at.is_(None)).order_by(Job.title, Job.id)))
+
+
 def set_job_skills(db: Session, job: Job, required: list[str], preferred: list[str]) -> None:
     """Make the job's skills match the lists, keeping links that are unchanged."""
     kinds = {name: SkillKind.REQUIRED.value for name in required}

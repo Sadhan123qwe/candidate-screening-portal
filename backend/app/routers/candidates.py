@@ -13,6 +13,11 @@ from app.services.presenters import to_candidate_detail, to_candidate_out
 router = APIRouter(prefix="/api/candidates", tags=["candidates"])
 
 
+@router.get("")
+def list_candidates(db: DbSession, _user: CurrentUser, search: str | None = None) -> list[CandidateOut]:
+    return [to_candidate_out(candidate) for candidate in candidate_service.list_candidates(db, search)]
+
+
 @router.post("", status_code=201)
 def create_candidate(payload: CandidateCreate, db: DbSession, user: CurrentUser) -> CandidateOut:
     return to_candidate_out(candidate_service.create_candidate(db, payload, user))

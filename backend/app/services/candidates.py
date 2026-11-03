@@ -1,11 +1,11 @@
 """Business logic for candidates: create, update, soft delete."""
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.errors import AppError
-from app.models import Application, AuditAction, Candidate, CandidateSkill, User, utcnow
+from app.models import Application, AuditAction, Candidate, CandidateSkill, Skill, User, utcnow
 from app.schemas import CandidateCreate, CandidateUpdate
 from app.services import skills as skill_service
 from app.services.applications import soft_delete_applications_of
@@ -15,6 +15,23 @@ from app.services.predictions import refresh_predictions
 
 # Only these change what the model sees, so only these trigger a rescore.
 FIELDS_AFFECTING_PREDICTIONS = {"skills", "experience_years"}
+
+
+def list_candidates(db: Session, search: str | None) -> list[Candidate]:
+    """Active candidates, optionally matching a name, email or skill."""
+    query = select(Candidate).where(Candidate.deleted_at.is_(None))
+    if search:
+        has_matching_skill = Candidate.skill_links.any(
+            CandidateSkill.skill.has(Skill.name.icontains(search, autoescape=True))
+        )
+        query = query.where(
+            or_(
+                Candidate.name.icontains(search, autoescape=True),
+                Candidate.email.icontains(search, autoescape=True),
+                has_matching_skill,
+            )
+        )
+    return list(db.scalars(query.order_by(Candidate.name, Candidate.id)))
 
 
 def _duplicate_email_error(db: Session, email: str) -> AppError:

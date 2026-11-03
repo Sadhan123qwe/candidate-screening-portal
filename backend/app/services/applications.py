@@ -1,6 +1,6 @@
 """Business logic for applications: create, change status, soft delete."""
 
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -9,6 +9,45 @@ from app.models import Application, ApplicationStatus, AuditAction, Candidate, J
 from app.services.audit import record_audit, snapshot_application
 from app.services.common import assert_version, flush_checking_version, get_active
 from app.services.predictions import refresh_predictions
+
+
+def list_applications(
+    db: Session,
+    job_id: int | None,
+    status: ApplicationStatus | None,
+    search: str | None,
+    page: int,
+    page_size: int,
+) -> tuple[list[Application], int]:
+    """Return one page of active applications and the total number that match."""
+    query = (
+        select(Application)
+        .join(Application.candidate)
+        .join(Application.job)
+        .where(Application.deleted_at.is_(None))
+    )
+    if job_id is not None:
+        query = query.where(Application.job_id == job_id)
+    if status is not None:
+        query = query.where(Application.status == status.value)
+    if search:
+        # autoescape stops a typed % or _ from acting as a wildcard.
+        query = query.where(
+            or_(
+                Candidate.name.icontains(search, autoescape=True),
+                Candidate.email.icontains(search, autoescape=True),
+                Job.title.icontains(search, autoescape=True),
+            )
+        )
+
+    total = db.scalar(select(func.count()).select_from(query.subquery()))
+    # The id tie-break keeps page contents stable when rows share a created_at.
+    items = db.scalars(
+        query.order_by(Application.created_at.desc(), Application.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    ).all()
+    return list(items), total
 
 
 def _duplicate_application_error(db: Session, candidate_id: int, job_id: int) -> AppError:

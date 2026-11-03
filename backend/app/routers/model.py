@@ -1,11 +1,16 @@
 """Health check and model information."""
 
+import json
+
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.auth import CurrentUser
+from app.config import get_settings
 from app.db import DbSession
+from app.errors import AppError
 from app.ml import predictor as predictor_module
 
 router = APIRouter(prefix="/api", tags=["model"])
@@ -18,6 +23,7 @@ def health(db: DbSession) -> JSONResponse:
         db.execute(select(1))
         database_ok = True
     except SQLAlchemyError:
+        db.rollback()
         database_ok = False
 
     predictor = predictor_module.get_predictor()
@@ -30,3 +36,12 @@ def health(db: DbSession) -> JSONResponse:
         },
         status_code=200 if database_ok else 503,
     )
+
+
+@router.get("/model/metrics")
+def model_metrics(_user: CurrentUser) -> dict:
+    """Return the evaluation written by scripts/train.py, exactly as it was saved."""
+    path = get_settings().metrics_path
+    if not path.exists():
+        raise AppError(404, "METRICS_UNAVAILABLE", "No metrics found. Run: python -m scripts.train")
+    return json.loads(path.read_text(encoding="utf-8"))
