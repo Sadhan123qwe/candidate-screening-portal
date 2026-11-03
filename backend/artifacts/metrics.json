@@ -1,0 +1,175 @@
+{
+  "model_name": "random_forest",
+  "model_version": "a71a100e917f",
+  "trained_at": "2026-11-03T11:46:48.817792+00:00",
+  "decision_threshold": 0.5,
+  "dataset": {
+    "train_applications": 400,
+    "test_applications": 100,
+    "train_candidates": 200,
+    "test_candidates": 50,
+    "train_positive_rate": 0.285,
+    "test_positive_rate": 0.3,
+    "train_match_rate_with_all_required": 0.8723404255319149,
+    "train_match_rate_without_all_required": 0.20679886685552407
+  },
+  "baseline": {
+    "rule": "predict 1 if required_overlap_ratio >= threshold",
+    "threshold": 0.6666666666666666,
+    "reason": "Highest F1 on the training set among the distinct ratio values; test labels were not used.",
+    "train_f1": 0.7188612099644128,
+    "train_thresholds": [
+      {
+        "threshold": 0.0,
+        "f1": 0.44357976653696496
+      },
+      {
+        "threshold": 0.25,
+        "f1": 0.5305164319248826
+      },
+      {
+        "threshold": 0.3333333333333333,
+        "f1": 0.553921568627451
+      },
+      {
+        "threshold": 0.5,
+        "f1": 0.7128712871287128
+      },
+      {
+        "threshold": 0.6666666666666666,
+        "f1": 0.7188612099644128
+      },
+      {
+        "threshold": 0.75,
+        "f1": 0.5747126436781609
+      },
+      {
+        "threshold": 1.0,
+        "f1": 0.5093167701863354
+      }
+    ]
+  },
+  "cross_validation": {
+    "method": "StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42), grouped by candidate_id",
+    "scoring": "F1 for class 1",
+    "best_by_model": {
+      "logistic_regression": 0.7225760492876396,
+      "random_forest": 0.7263437101981577
+    },
+    "results": {
+      "logistic_regression": [
+        {
+          "params": {
+            "C": 0.01
+          },
+          "mean_f1": 0.7098144753982221,
+          "std_f1": 0.036294956326013615
+        },
+        {
+          "params": {
+            "C": 0.1
+          },
+          "mean_f1": 0.7225760492876396,
+          "std_f1": 0.02524727324357629
+        },
+        {
+          "params": {
+            "C": 1
+          },
+          "mean_f1": 0.7110259425804221,
+          "std_f1": 0.01757689110241496
+        },
+        {
+          "params": {
+            "C": 10
+          },
+          "mean_f1": 0.7044381192577914,
+          "std_f1": 0.015639880653965436
+        }
+      ],
+      "random_forest": [
+        {
+          "params": {
+            "min_samples_leaf": 1,
+            "n_estimators": 100
+          },
+          "mean_f1": 0.6486226965590267,
+          "std_f1": 0.03882670408912567
+        },
+        {
+          "params": {
+            "min_samples_leaf": 1,
+            "n_estimators": 300
+          },
+          "mean_f1": 0.6619516572586481,
+          "std_f1": 0.03885673952917598
+        },
+        {
+          "params": {
+            "min_samples_leaf": 5,
+            "n_estimators": 100
+          },
+          "mean_f1": 0.7212155050699525,
+          "std_f1": 0.03334137369089138
+        },
+        {
+          "params": {
+            "min_samples_leaf": 5,
+            "n_estimators": 300
+          },
+          "mean_f1": 0.7263437101981577,
+          "std_f1": 0.02563914751446963
+        },
+        {
+          "params": {
+            "min_samples_leaf": 10,
+            "n_estimators": 100
+          },
+          "mean_f1": 0.7239918292748482,
+          "std_f1": 0.020115253962233678
+        },
+        {
+          "params": {
+            "min_samples_leaf": 10,
+            "n_estimators": 300
+          },
+          "mean_f1": 0.713740599023618,
+          "std_f1": 0.02505389991371064
+        }
+      ]
+    }
+  },
+  "chosen_model": {
+    "name": "random_forest",
+    "params": {
+      "min_samples_leaf": 5,
+      "n_estimators": 300
+    },
+    "mean_cv_f1": 0.7263437101981577
+  },
+  "test": {
+    "baseline": {
+      "precision": 0.717948717948718,
+      "recall": 0.9333333333333333,
+      "f1": 0.8115942028985508,
+      "confusion_matrix": {
+        "tn": 59,
+        "fp": 11,
+        "fn": 2,
+        "tp": 28
+      }
+    },
+    "model": {
+      "precision": 0.7368421052631579,
+      "recall": 0.9333333333333333,
+      "f1": 0.8235294117647058,
+      "confusion_matrix": {
+        "tn": 60,
+        "fp": 10,
+        "fn": 2,
+        "tp": 28
+      }
+    }
+  },
+  "logistic_coefficients": null
+}
