@@ -79,6 +79,27 @@ Every non-obvious choice and the reason for it. Newest thinking is grouped by to
   already refreshed whenever the inputs change, so the two can't disagree.
 - **Replacement contributions for the random forest.** See `docs/MODEL_REPORT.md`.
 
+## Frontend
+
+- **Node support is split: 18+ to run the app, 22.12+ for its tests.** The brief asks for Node 18+, and `vite` 6 supports
+  it. A production build was verified on Node 18.20. But every Vitest release that runs on Node 18 has a critical
+  `npm audit` finding, and the fixed releases need Node 22.12+. Clean audits seemed worth asking a little more of whoever
+  runs the frontend tests, since the app itself still runs on Node 18.
+- **React Router 7 rather than 6.** Version 6 has an open-redirect advisory fixed only in 7. Version 7 still supports
+  React 18, and the migration was a one-line change. Its package declares Node 20+, but it runs in the browser, and the
+  Node 18 build still works.
+- **Every successful write refreshes all queries.** It is less efficient than targeted invalidation, but a status change
+  affects the table, the job's counts and the candidate's page, and at this scale correctness matters far more.
+- **The status dropdown isn't optimistic.** It shows what the server last confirmed, so a failed update can't leave a
+  status on screen that was never saved.
+- **Forms remount on a new `version`.** Using `key={job.version}` is the simplest way to guarantee that a form can't keep
+  showing values older than the record it would overwrite. The cost is that a stale update discards what was typed, and
+  the message asks the recruiter to review.
+- **Tooltips use the `title` attribute.** It's plain and accessible enough for the hover text the brief asks for, and it
+  needs no extra library.
+- **The metrics page shows the confusion matrix as a table, not the PNG.** The numbers are readable and accessible, and
+  the API doesn't need to serve image files. The PNG stays in `artifacts/` and in the model report.
+
 ## Testing
 
 - **`TEST_DATABASE_URL` lets the API tests run on PostgreSQL.** The concurrency and constraint tests behave differently
