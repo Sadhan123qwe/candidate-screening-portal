@@ -1,10 +1,8 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import type { Application } from "../api/types";
-import { formatDate } from "../lib/format";
-import { ApplicationDetailModal } from "./ApplicationDetailModal";
-import { PredictionBadge } from "./PredictionBadge";
-import { StatusSelect } from "./StatusSelect";
+import { formatYears } from "../lib/format";
+import { PredictionBadge } from "./ui/PredictionBadge";
+import { StatusPill } from "./ui/StatusPill";
 
 interface ApplicationsTableProps {
   applications: Application[];
@@ -14,59 +12,67 @@ interface ApplicationsTableProps {
 }
 
 export function ApplicationsTable({ applications, hideCandidate, hideJob }: ApplicationsTableProps) {
-  const [detailId, setDetailId] = useState<number | null>(null);
+  const location = useLocation();
 
   return (
-    <>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
-          <thead className="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
-            <tr>
-              {!hideCandidate && <th className="px-4 py-2">Candidate</th>}
-              {!hideJob && <th className="px-4 py-2">Job</th>}
-              <th className="px-4 py-2">Status</th>
-              <th className="px-4 py-2">Prediction</th>
-              <th className="px-4 py-2">Created</th>
-              <th className="px-4 py-2">
-                <span className="sr-only">Details</span>
-              </th>
+    <div className="table-scroll">
+      <table className="data-table min-w-[900px]">
+        <thead>
+          <tr>
+            {!hideCandidate && <th scope="col">Candidate</th>}
+            {!hideJob && <th scope="col">Job</th>}
+            <th scope="col">Required skills</th>
+            <th scope="col">Experience</th>
+            <th scope="col">Prediction</th>
+            <th scope="col">Status</th>
+            <th scope="col">
+              <span className="sr-only">Open</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {applications.map((application) => (
+            <tr key={application.id}>
+              {!hideCandidate && (
+                <td>
+                  <Link className="cell-link cell-title" to={`/candidates/${application.candidate_id}`}>
+                    {application.candidate_name}
+                  </Link>
+                  <span className="cell-sub">{application.candidate_email}</span>
+                </td>
+              )}
+              {!hideJob && (
+                <td>
+                  <Link className="cell-link" to={`/jobs/${application.job_id}`}>
+                    {application.job_title}
+                  </Link>
+                </td>
+              )}
+              <td className="num whitespace-nowrap">
+                {application.required_matched} / {application.required_total}
+              </td>
+              <td className="num whitespace-nowrap">{formatYears(application.candidate_experience_years)}</td>
+              <td>
+                <PredictionBadge prediction={application.prediction} message={application.prediction_message} />
+              </td>
+              <td>
+                <StatusPill application={application} />
+              </td>
+              <td className="whitespace-nowrap text-right">
+                <Link
+                  className="link font-normal"
+                  to={`/applications/${application.id}`}
+                  // Lets the breadcrumb on the detail page return to this same filtered view.
+                  state={{ fromSearch: location.search }}
+                  aria-label={`Open application: ${application.candidate_name}, ${application.job_title}`}
+                >
+                  Open &rarr;
+                </Link>
+              </td>
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 bg-white">
-            {applications.map((application) => (
-              <tr key={application.id}>
-                {!hideCandidate && (
-                  <td className="px-4 py-2">
-                    <Link className="link" to={`/candidates/${application.candidate_id}`}>
-                      {application.candidate_name}
-                    </Link>
-                  </td>
-                )}
-                {!hideJob && (
-                  <td className="px-4 py-2">
-                    <Link className="link" to={`/jobs/${application.job_id}`}>
-                      {application.job_title}
-                    </Link>
-                  </td>
-                )}
-                <td className="px-4 py-2">
-                  <StatusSelect application={application} />
-                </td>
-                <td className="px-4 py-2">
-                  <PredictionBadge prediction={application.prediction} message={application.prediction_message} />
-                </td>
-                <td className="whitespace-nowrap px-4 py-2 text-gray-600">{formatDate(application.created_at)}</td>
-                <td className="px-4 py-2 text-right">
-                  <button type="button" className="link text-sm" onClick={() => setDetailId(application.id)}>
-                    Details
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {detailId !== null && <ApplicationDetailModal applicationId={detailId} onClose={() => setDetailId(null)} />}
-    </>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

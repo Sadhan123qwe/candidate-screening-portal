@@ -10,8 +10,12 @@ function makeApplication(overrides: Partial<Application> = {}): Application {
     id: 1,
     candidate_id: 10,
     candidate_name: "Ada Candidate",
+    candidate_email: "ada@example.com",
+    candidate_experience_years: 1.5,
     job_id: 20,
     job_title: "React Intern",
+    required_matched: 2,
+    required_total: 3,
     status: "Applied",
     version: 1,
     created_at: "2026-01-15T10:00:00Z",
@@ -31,10 +35,14 @@ function pageOf(items: Application[]): ApplicationPage {
   return { items, total: items.length, page: 1, page_size: 25 };
 }
 
-/** Answers the jobs filter, and lets each test decide how applications respond. */
+const SUMMARY = { total: 7, applied: 4, shortlisted: 2, rejected: 1 };
+
+/** Answers the page's supporting requests, and lets each test decide how applications respond. */
 function mockApi(applications: MockHandler) {
   return mockFetch((url, init) => {
     if (url.pathname === "/api/jobs") return jsonResponse([]);
+    if (url.pathname === "/api/stats") return jsonResponse({ jobs: 10, candidates: 250, applications: 500 });
+    if (url.pathname === "/api/applications/summary") return jsonResponse(SUMMARY);
     return applications(url, init);
   });
 }
@@ -73,13 +81,14 @@ describe("ApplicationsPage", () => {
     );
     renderWithProviders(<ApplicationsPage />);
 
-    const match = await screen.findByText("Potential Match");
+    const match = await screen.findByText("Potential Match", { selector: "span" });
     expect(match).toHaveAttribute("title", "Probability of a match: 87%");
-    expect(match).toHaveClass("bg-green-100");
+    expect(match).toHaveClass("badge-ok");
+    expect(within(match).getByText("87%")).toHaveClass("num");
 
     const unavailable = screen.getByText("Unavailable");
     expect(unavailable).toHaveAttribute("title", "Prediction unavailable: the model file is missing.");
-    expect(unavailable).toHaveClass("bg-gray-100");
+    expect(unavailable).toHaveClass("badge-none");
   });
 
   it("shows the empty state", async () => {
@@ -108,7 +117,7 @@ describe("ApplicationsPage", () => {
 
   it("reads filters from the URL and sends them to the API", async () => {
     const fetchMock = mockApi(() => jsonResponse(pageOf([makeApplication()])));
-    renderWithProviders(<ApplicationsPage />, "/?status=Shortlisted&search=ada&page=2");
+    renderWithProviders(<ApplicationsPage />, "/?status=Shortlisted&search=ada&prediction=Needs+Review&page=2");
 
     await screen.findByRole("link", { name: "Ada Candidate" });
 
@@ -117,8 +126,49 @@ describe("ApplicationsPage", () => {
       .find((url) => url.pathname === "/api/applications")!;
     expect(request.searchParams.get("status")).toBe("Shortlisted");
     expect(request.searchParams.get("search")).toBe("ada");
+    expect(request.searchParams.get("prediction")).toBe("Needs Review");
     expect(request.searchParams.get("page")).toBe("2");
+    expect(screen.getByRole("combobox", { name: "Filter by prediction" })).toHaveValue("Needs Review");
     expect(screen.getByRole("combobox", { name: "Filter by status" })).toHaveValue("Shortlisted");
+  });
+
+  it("shows status counts on the chips, and filters when one is clicked", async () => {
+    const fetchMock = mockApi(() => jsonResponse(pageOf([makeApplication()])));
+    renderWithProviders(<ApplicationsPage />);
+    await screen.findByRole("link", { name: "Ada Candidate" });
+
+    const shortlisted = await screen.findByRole("button", { name: "Shortlisted 2" });
+    expect(screen.getByRole("button", { name: "All 7" })).toHaveAttribute("aria-pressed", "true");
+
+    await userEvent.setup().click(shortlisted);
+
+    await waitFor(() => expect(shortlisted).toHaveAttribute("aria-pressed", "true"));
+    expect(screen.getByRole("combobox", { name: "Filter by status" })).toHaveValue("Shortlisted");
+    await waitFor(() => {
+      const urls = fetchMock.mock.calls.map(([input]) => new URL(String(input)));
+      expect(urls.some((url) => url.pathname === "/api/applications" && url.searchParams.get("status") === "Shortlisted")).toBe(true);
+    });
+  });
+
+  it("passes the job filter to the status counts", async () => {
+    const fetchMock = mockApi(() => jsonResponse(pageOf([makeApplication()])));
+    renderWithProviders(<ApplicationsPage />, "/?job_id=20");
+    await screen.findByRole("link", { name: "Ada Candidate" });
+
+    const summary = fetchMock.mock.calls
+      .map(([input]) => new URL(String(input)))
+      .find((url) => url.pathname === "/api/applications/summary")!;
+    expect(summary.searchParams.get("job_id")).toBe("20");
+  });
+
+  it("shows the required skill match and experience on each row", async () => {
+    mockApi(() => jsonResponse(pageOf([makeApplication()])));
+    renderWithProviders(<ApplicationsPage />);
+
+    expect(await screen.findByText("2 / 3")).toHaveClass("num");
+    expect(screen.getByText("1.5 yr")).toHaveClass("num");
+    expect(screen.getByText("ada@example.com")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Open application: Ada Candidate/ })).toHaveAttribute("href", "/applications/1");
   });
 
   it("sends the version it read when changing status, and updates the row in place", async () => {
@@ -177,7 +227,7 @@ describe("ApplicationsPage", () => {
     renderWithProviders(<ApplicationsPage />);
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole("button", { name: "Assign candidate to job" }));
+    await user.click(screen.getByRole("button", { name: "+ Assign candidate" }));
     const dialog = await screen.findByRole("dialog");
     await user.selectOptions(await within(dialog).findByLabelText("Candidate"), "10");
     await user.selectOptions(within(dialog).getByLabelText("Job"), "20");

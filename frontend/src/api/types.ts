@@ -3,6 +3,8 @@
 export const APPLICATION_STATUSES = ["Applied", "Shortlisted", "Rejected"] as const;
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 
+export const PREDICTION_LABELS = ["Potential Match", "Needs Review"] as const;
+
 export interface User {
   id: number;
   email: string;
@@ -61,8 +63,12 @@ export interface Application {
   id: number;
   candidate_id: number;
   candidate_name: string;
+  candidate_email: string;
+  candidate_experience_years: number;
   job_id: number;
   job_title: string;
+  required_matched: number;
+  required_total: number;
   status: ApplicationStatus;
   version: number;
   created_at: string;
@@ -78,8 +84,23 @@ export interface FeatureContribution {
 }
 
 export interface ApplicationDetail extends Application {
-  candidate_email: string;
   top_features: FeatureContribution[];
+  candidate_profile_summary: string;
+  job_min_experience_years: number;
+  experience_gap: number;
+  required_skills_matched: string[];
+  required_skills_missing: string[];
+  preferred_skills_matched: string[];
+  preferred_skills_missing: string[];
+  other_candidate_skills: string[];
+  imported_from_dataset: boolean;
+}
+
+export interface ApplicationSummary {
+  total: number;
+  applied: number;
+  shortlisted: number;
+  rejected: number;
 }
 
 export interface ApplicationPage {
@@ -109,6 +130,7 @@ export interface Candidate {
   version: number;
   created_at: string;
   updated_at: string;
+  application_count: number;
 }
 
 export interface CandidateDetail extends Candidate {

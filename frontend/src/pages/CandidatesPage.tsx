@@ -34,7 +34,7 @@ export function CandidatesPage() {
       </div>
 
       <div className="max-w-md">
-        <SearchBox label="Search candidates" placeholder="Search name, email or skill" value={search} onChange={handleSearch} />
+        <SearchBox id="candidate-search" label="Search candidates" placeholder="Search name, email or skill" value={search} onChange={handleSearch} />
       </div>
 
       <div className="card overflow-hidden">

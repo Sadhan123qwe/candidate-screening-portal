@@ -1,3 +1,5 @@
+import { Button } from "./ui/Button";
+
 interface PaginationProps {
   page: number;
   pageSize: number;
@@ -11,20 +13,21 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
   const lastRow = Math.min(page * pageSize, total);
 
   return (
-    <nav aria-label="Pagination" className="flex items-center justify-between border-t border-gray-200 px-4 py-3 text-sm text-gray-600">
-      <span>
-        {firstRow}&ndash;{lastRow} of {total}
+    <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-3">
+      <span className="text-muted">
+        Showing{" "}
+        <span className="num">
+          {firstRow}&ndash;{lastRow}
+        </span>{" "}
+        of <span className="num">{total}</span>
       </span>
-      <div className="flex items-center gap-2">
-        <button type="button" className="btn-secondary py-1" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
+      <div className="flex gap-2">
+        <Button disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
           Previous
-        </button>
-        <span>
-          Page {page} of {lastPage}
-        </span>
-        <button type="button" className="btn-secondary py-1" disabled={page >= lastPage} onClick={() => onPageChange(page + 1)}>
+        </Button>
+        <Button disabled={page >= lastPage} onClick={() => onPageChange(page + 1)}>
           Next
-        </button>
+        </Button>
       </div>
     </nav>
   );

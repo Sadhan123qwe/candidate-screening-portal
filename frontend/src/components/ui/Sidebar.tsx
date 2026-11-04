@@ -51,7 +51,7 @@ export function Sidebar() {
       <div className="sidebar-footer">
         <p className="sidebar-footer-name font-medium">{user.data?.full_name}</p>
         <p className="sidebar-footer-email text-muted">{user.data?.email}</p>
-        <button type="button" className="link mt-3 font-normal max-[899.98px]:mt-0" onClick={logOut}>
+        <button type="button" className="link mt-1.5 font-normal max-[899.98px]:mt-0" onClick={logOut}>
           Log out
         </button>
       </div>

@@ -286,7 +286,7 @@
     position: relative;
     display: inline-flex;
     gap: 4px;
-    padding: 0 10px 0 11px;
+    padding: 0 9px 0 11px;
   }
   .status-pill:focus-within {
     box-shadow: 0 0 0 2px var(--accent);
@@ -418,7 +418,7 @@
     text-align: left;
   }
   .data-table th {
-    padding: 13px 18px;
+    padding: 12px 18px;
     border-bottom: 1px solid var(--line);
     color: var(--muted);
     font-size: 11.5px;
@@ -428,7 +428,7 @@
     text-transform: uppercase;
   }
   .data-table td {
-    padding: 12px 18px;
+    padding: 11.5px 18px;
     vertical-align: middle;
   }
   .data-table tbody tr + tr td {
@@ -498,7 +498,7 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-    margin-top: 25px;
+    margin-top: 26px;
   }
   .nav-item {
     display: flex;
@@ -524,7 +524,7 @@
   }
   .sidebar-footer {
     margin-top: auto;
-    padding: 20px 8px 0;
+    padding: 16px 8px 0;
     border-top: 1px solid var(--line);
   }
 
@@ -539,6 +539,13 @@
   }
   .page-stack > * + * {
     margin-top: 20px;
+  }
+
+  .glass.filter-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    padding: 13px 15px;
   }
 
   /* ---------- Login ---------- */
@@ -755,6 +762,9 @@
   .page-title {
     font-size: 24px;
     line-height: 32px;
+  }
+  .glass.filter-bar {
+    grid-template-columns: minmax(0, 1fr);
   }
   .login-page {
     padding: 16px;
