@@ -548,6 +548,102 @@
     padding: 13px 15px;
   }
 
+  /* ---------- Application detail ---------- */
+  .detail-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 18px;
+  }
+  .detail-column > * + * {
+    margin-top: 18px;
+  }
+  .confidence-value {
+    font-family: var(--font-mono);
+    font-size: 46px;
+    font-weight: 600;
+    letter-spacing: -0.06em;
+    line-height: 52px;
+  }
+  .bar {
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+  }
+  .bar > div {
+    height: 100%;
+    border-radius: 999px;
+  }
+  .confidence-fill {
+    background: linear-gradient(90deg, var(--ok), var(--accent));
+  }
+  .bar-fill-ok {
+    background: var(--ok);
+  }
+  .bar-fill-warn {
+    background: var(--warn);
+  }
+  .timeline li {
+    position: relative;
+    padding-left: 22px;
+    line-height: 18px;
+  }
+  .timeline li + li {
+    margin-top: 12px;
+  }
+  .timeline li::before {
+    content: "";
+    position: absolute;
+    top: 5px;
+    left: 0;
+    width: 10px;
+    height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .timeline li + li::after {
+    content: "";
+    position: absolute;
+    top: -29px;
+    bottom: 17px;
+    left: 4.5px;
+    width: 1px;
+    background: var(--line-strong);
+  }
+  .segmented {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .segment {
+    height: 44px;
+    padding: 0 6px;
+    background: var(--glass-strong);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-btn);
+    font-weight: 500;
+    transition: background-color 0.15s;
+  }
+  .segment:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.18);
+  }
+  .segment:focus-visible {
+    border-radius: var(--radius-btn);
+  }
+  .segment:disabled {
+    cursor: wait;
+  }
+  .segment[aria-pressed="true"] {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: transparent;
+    color: var(--accent-ink);
+  }
+  .delete-row {
+    display: flex;
+    justify-content: flex-end;
+    margin: 8px -8px -12px 0;
+  }
+
   /* ---------- Login ---------- */
   .login-page {
     display: flex;
@@ -764,6 +860,9 @@
     line-height: 32px;
   }
   .glass.filter-bar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .detail-grid {
     grid-template-columns: minmax(0, 1fr);
   }
   .login-page {

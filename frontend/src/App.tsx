@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { RequireAuth } from "./components/RequireAuth";
 import { Backdrop } from "./components/ui/Backdrop";
+import { ApplicationDetailPage } from "./pages/ApplicationDetailPage";
 import { ApplicationsPage } from "./pages/ApplicationsPage";
 import { CandidateDetailPage } from "./pages/CandidateDetailPage";
 import { CandidatesPage } from "./pages/CandidatesPage";
@@ -20,6 +21,7 @@ export function App() {
           <Route element={<RequireAuth />}>
             <Route element={<Layout />}>
               <Route path="/applications" element={<ApplicationsPage />} />
+              <Route path="/applications/:id" element={<ApplicationDetailPage />} />
               <Route path="/jobs" element={<JobsPage />} />
               <Route path="/jobs/:id" element={<JobDetailPage />} />
               <Route path="/candidates" element={<CandidatesPage />} />
