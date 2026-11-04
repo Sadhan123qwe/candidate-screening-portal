@@ -16,6 +16,12 @@ export interface LoginResponse {
   user: User;
 }
 
+export interface PortalStats {
+  jobs: number;
+  candidates: number;
+  applications: number;
+}
+
 export interface ApplicationCounts {
   Applied: number;
   Shortlisted: number;
