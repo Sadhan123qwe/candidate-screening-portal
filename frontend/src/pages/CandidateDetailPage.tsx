@@ -5,35 +5,45 @@ import { ApiError, STALE_UPDATE_MESSAGE } from "../api/client";
 import type { CandidateDetail, CandidateInput } from "../api/types";
 import { ApplicationsTable } from "../components/ApplicationsTable";
 import { CandidateForm } from "../components/CandidateForm";
-import { ErrorNotice, WarningNotice } from "../components/FormParts";
 import { QueryBoundary } from "../components/QueryBoundary";
-import { SkillList } from "../components/SkillList";
+import { Button } from "../components/ui/Button";
+import { GlassCard } from "../components/ui/GlassCard";
+import { ErrorNotice, WarningNotice } from "../components/ui/Notice";
+import { PageHeader } from "../components/ui/PageHeader";
+import { SkillTag } from "../components/ui/SkillTag";
+import { EmptyState } from "../components/ui/States";
 import { formatYears } from "../lib/format";
 
 export function CandidateDetailPage() {
   const candidate = useCandidate(Number(useParams().id));
 
   return (
-    <div className="space-y-4">
-      <Link to="/candidates" className="link text-sm">
-        &larr; All candidates
-      </Link>
-      <QueryBoundary query={candidate}>
-        {(data) => (
-          <>
-            <CandidateSummary candidate={data} />
-            <div className="card overflow-hidden">
-              <h2 className="border-b border-gray-200 px-4 py-3 text-sm font-semibold text-gray-900">Applications</h2>
-              {data.applications.length === 0 ? (
-                <p className="py-12 text-center text-sm text-gray-500">This candidate hasn't applied to any jobs yet.</p>
-              ) : (
+    <QueryBoundary query={candidate}>
+      {(data) => (
+        <div>
+          <nav aria-label="Breadcrumb" className="mb-[14px] flex flex-wrap gap-x-3 leading-5">
+            <Link to="/candidates" className="cell-link text-muted">
+              Candidates
+            </Link>
+            <span aria-hidden="true" className="text-muted">
+              /
+            </span>
+            <span aria-current="page">{data.name}</span>
+          </nav>
+          <CandidateSummary candidate={data} />
+          <section className="page-stack mt-5" aria-label="Applications">
+            <h2 className="card-title">Applications</h2>
+            {data.applications.length === 0 ? (
+              <EmptyState message="This candidate hasn't applied to any jobs yet." />
+            ) : (
+              <GlassCard padding="none" className="overflow-hidden">
                 <ApplicationsTable applications={data.applications} hideCandidate />
-              )}
-            </div>
-          </>
-        )}
-      </QueryBoundary>
-    </div>
+              </GlassCard>
+            )}
+          </section>
+        </div>
+      )}
+    </QueryBoundary>
   );
 }
 
@@ -79,49 +89,58 @@ function CandidateSummary({ candidate }: { candidate: CandidateDetail }) {
   }
 
   return (
-    <div className="card space-y-4 p-5">
-      <WarningNotice message={staleNotice} />
-      <ErrorNotice message={deleteCandidate.error?.message} />
-
-      {isEditing ? (
-        <CandidateForm
-          // A new version remounts the form, so it can't keep showing out-of-date values.
-          key={candidate.version}
-          candidate={candidate}
-          submitLabel="Save changes"
-          isSubmitting={updateCandidate.isPending}
-          serverError={updateCandidate.error}
-          onSubmit={handleSave}
-          onCancel={() => {
-            setIsEditing(false);
-            updateCandidate.reset();
-          }}
-        />
-      ) : (
-        <>
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">{candidate.name}</h1>
-              <p className="text-sm text-gray-600">
-                {candidate.email} &middot; {formatYears(candidate.experience_years)} of experience
-              </p>
-            </div>
+    <>
+      <PageHeader
+        title={candidate.name}
+        subtitle={
+          <>
+            {candidate.email} &middot; <span className="num">{formatYears(candidate.experience_years)}</span> of experience
+          </>
+        }
+        aside={
+          !isEditing && (
             <div className="flex gap-2">
-              <button type="button" className="btn-secondary" onClick={() => setIsEditing(true)}>
-                Edit
-              </button>
-              <button type="button" className="btn-danger" disabled={deleteCandidate.isPending} onClick={handleDelete}>
+              <Button onClick={() => setIsEditing(true)}>Edit</Button>
+              <Button className="btn-danger-text" disabled={deleteCandidate.isPending} onClick={handleDelete}>
                 Delete
-              </button>
+              </Button>
             </div>
-          </div>
-          {candidate.profile_summary && <p className="text-sm text-gray-700">{candidate.profile_summary}</p>}
-          <div>
-            <h2 className="mb-1 text-sm font-medium text-gray-700">Skills</h2>
-            <SkillList skills={candidate.skills} />
-          </div>
-        </>
-      )}
-    </div>
+          )
+        }
+      />
+
+      <GlassCard as="section" className="space-y-4">
+        <WarningNotice message={staleNotice} />
+        <ErrorNotice message={deleteCandidate.error?.message} />
+
+        {isEditing ? (
+          <CandidateForm
+            // A new version remounts the form, so it can't keep showing out-of-date values.
+            key={candidate.version}
+            candidate={candidate}
+            submitLabel="Save changes"
+            isSubmitting={updateCandidate.isPending}
+            serverError={updateCandidate.error}
+            onSubmit={handleSave}
+            onCancel={() => {
+              setIsEditing(false);
+              updateCandidate.reset();
+            }}
+          />
+        ) : (
+          <>
+            {candidate.profile_summary && <p className="text-muted">{candidate.profile_summary}</p>}
+            <div>
+              <h3 className="eyebrow">Skills</h3>
+              <div className="skill-list mt-[10px]">
+                {candidate.skills.map((skill) => (
+                  <SkillTag key={skill} skill={skill} />
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </GlassCard>
+    </>
   );
 }
