@@ -1,0 +1,28 @@
+:root {
+  --bg: #0a0e1c; /* page ground */
+  --ink: #f4f6fb;
+  --muted: #aeb6cc;
+  --faint: #8790a8;
+  --glass: rgba(255, 255, 255, 0.08);
+  --glass-strong: rgba(255, 255, 255, 0.13);
+  --line: rgba(255, 255, 255, 0.16);
+  --line-strong: rgba(255, 255, 255, 0.26);
+  --accent: #7c9bff;
+  --accent-ink: #0b1020;
+  --ok: #5be0a4;
+  --ok-bg: rgba(91, 224, 164, 0.16);
+  --ok-line: rgba(91, 224, 164, 0.3);
+  --warn: #ffc266;
+  --warn-bg: rgba(255, 194, 102, 0.16);
+  --warn-line: rgba(255, 194, 102, 0.3);
+  --bad: #ff8a80;
+  --bad-bg: rgba(255, 138, 128, 0.16);
+  --bad-line: rgba(255, 138, 128, 0.3);
+  --info: #9db4ff;
+  --info-bg: rgba(124, 155, 255, 0.18);
+  --radius-card: 18px;
+  --radius-ctl: 10px;
+  --radius-btn: 12px;
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}

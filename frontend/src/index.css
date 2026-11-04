@@ -2,27 +2,815 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer components {
-  /* Shared so every form control and button looks the same. */
-  .input {
-    @apply block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 disabled:bg-gray-100;
+@layer base {
+  html {
+    background: var(--bg);
+    color-scheme: dark;
   }
+
+  body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.45;
+  }
+
+  :focus-visible {
+    outline: none;
+    border-radius: 6px;
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+
+  option,
+  optgroup {
+    background: #161b2e;
+    color: var(--ink);
+  }
+}
+
+@layer components {
+  /* ---------- Backdrop ---------- */
+  .blob {
+    position: fixed;
+    z-index: 0;
+    border-radius: 50%;
+    filter: blur(90px);
+    pointer-events: none;
+  }
+  .blob-blue {
+    top: -140px;
+    left: -160px;
+    width: 620px;
+    height: 620px;
+    background: #3b5bff;
+    opacity: 0.75;
+  }
+  .blob-teal {
+    top: 46%;
+    right: -190px;
+    width: 560px;
+    height: 560px;
+    background: #18b6a0;
+    opacity: 0.55;
+    transform: translateY(-50%);
+  }
+  .blob-violet {
+    bottom: -240px;
+    left: 50%;
+    width: 520px;
+    height: 520px;
+    background: #a24bff;
+    opacity: 0.55;
+    transform: translateX(-50%);
+  }
+  .app-layer {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ---------- Glass surface ---------- */
+  .glass {
+    background: var(--glass);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    -webkit-backdrop-filter: blur(22px) saturate(140%);
+    backdrop-filter: blur(22px) saturate(140%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      0 20px 50px rgba(0, 0, 0, 0.35);
+  }
+  .pad-sm {
+    padding: 15px;
+  }
+  .pad-md {
+    padding: 22px;
+  }
+  .pad-lg {
+    padding: 30px;
+  }
+
+  /* ---------- Buttons ---------- */
   .btn {
-    @apply inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 44px;
+    padding: 0 18px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-btn);
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition:
+      background-color 0.15s,
+      filter 0.15s;
+  }
+  .btn:focus-visible {
+    border-radius: var(--radius-btn);
+  }
+  .btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
   }
   .btn-primary {
-    @apply btn bg-accent-600 text-white hover:bg-accent-700;
+    background: linear-gradient(90deg, #8ea8ff, #6c8bff);
+    color: var(--accent-ink);
+    box-shadow: 0 8px 24px rgba(108, 139, 255, 0.35);
+  }
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.06);
+  }
+  .btn-primary:focus-visible {
+    /* The ring is set apart with a dark gap, or it would vanish against the blue fill. */
+    box-shadow:
+      0 0 0 2px var(--bg),
+      0 0 0 4px var(--accent),
+      0 8px 24px rgba(108, 139, 255, 0.35);
   }
   .btn-secondary {
-    @apply btn border border-gray-300 bg-white text-gray-700 hover:bg-gray-50;
+    background: var(--glass-strong);
+    border-color: var(--line-strong);
+    color: var(--ink);
   }
-  .btn-danger {
-    @apply btn border border-red-300 bg-white text-red-700 hover:bg-red-50;
+  .btn-secondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.18);
   }
-  .card {
-    @apply rounded-lg border border-gray-200 bg-white;
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--glass);
+  }
+  .btn-danger-text {
+    color: var(--bad);
+  }
+
+  /* ---------- Form controls ---------- */
+  .field-label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .field-error {
+    margin-top: 6px;
+    color: var(--bad);
+    font-size: 13px;
+  }
+  .field-hint {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .control {
+    display: block;
+    width: 100%;
+    height: 42px;
+    padding: 0 12px;
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-ctl);
+    color: var(--ink);
+    font-size: 14px;
+  }
+  .control::placeholder,
+  .skill-input input::placeholder {
+    color: var(--faint);
+    opacity: 1;
+  }
+  .control:focus-visible {
+    border-color: var(--accent);
+    border-radius: var(--radius-ctl);
+  }
+  .control:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+  .control-error {
+    border-color: rgba(255, 138, 128, 0.6);
+  }
+  textarea.control {
+    height: 72px;
+    min-height: 72px;
+    padding: 10px 12px;
+    resize: vertical;
+  }
+  select.control {
+    padding-right: 32px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath fill='%23F4F6FB' d='M0 0h10L5 7z'/%3E%3C/svg%3E");
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+  }
+  input[type="number"].control {
+    appearance: textfield;
+  }
+  input[type="number"].control::-webkit-inner-spin-button,
+  input[type="number"].control::-webkit-outer-spin-button {
+    appearance: none;
+  }
+  input[type="search"].control::-webkit-search-cancel-button {
+    appearance: none;
+  }
+  .skill-input {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    min-height: 42px;
+    padding: 5px 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-ctl);
+    cursor: text;
+  }
+  .skill-input:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+  .skill-input input {
+    flex: 1;
+    min-width: 72px;
+    height: 28px;
+    background: transparent;
+    color: var(--ink);
+    font-size: 14px;
+  }
+  .skill-input input:focus-visible {
+    box-shadow: none;
+  }
+
+  /* ---------- Pills, tags and chips ---------- */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 25px;
+    padding: 0 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .pill-dot {
+    width: 7px;
+    height: 7px;
+    flex: none;
+    background: currentColor;
+    border-radius: 50%;
+  }
+  .badge-ok {
+    background: var(--ok-bg);
+    border-color: var(--ok-line);
+    color: var(--ok);
+  }
+  .badge-warn {
+    background: var(--warn-bg);
+    border-color: var(--warn-line);
+    color: var(--warn);
+  }
+  .badge-none {
+    background: var(--glass);
+    border-color: var(--line);
+    color: #dce1ee;
+  }
+  .status-pill {
+    position: relative;
+    display: inline-flex;
+    gap: 4px;
+    padding: 0 10px 0 11px;
+  }
+  .status-pill:focus-within {
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+  .status-pill select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    cursor: pointer;
+    opacity: 0;
+  }
+  .status-pill select:disabled {
+    cursor: wait;
+  }
+  .status-applied {
+    background: var(--glass-strong);
+    border-color: var(--line);
+    color: #dce1ee;
+  }
+  .status-shortlisted {
+    background: var(--info-bg);
+    border-color: rgba(124, 155, 255, 0.34);
+    color: var(--info);
+  }
+  .status-rejected {
+    background: var(--bad-bg);
+    border-color: var(--bad-line);
+    color: var(--bad);
+  }
+  .skill-tag {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 9px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: var(--glass);
+    color: #dce1ee;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .skill-tag-hit {
+    background: var(--ok-bg);
+    border-color: var(--ok-line);
+    color: var(--ok);
+  }
+  .skill-tag-miss {
+    background: var(--bad-bg);
+    border-color: var(--bad-line);
+    color: var(--bad);
+  }
+  .skill-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 35px;
+    padding: 0 14px;
+    background: var(--glass);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 14px;
+    white-space: nowrap;
+    transition: background-color 0.15s;
+  }
+  .chip:hover {
+    background: var(--glass-strong);
+  }
+  .chip:focus-visible {
+    border-radius: 999px;
+  }
+  .chip[aria-pressed="true"] {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: transparent;
+    color: var(--accent-ink);
+  }
+
+  /* ---------- Text helpers ---------- */
+  .num {
+    font-family: var(--font-mono);
   }
   .link {
-    @apply font-medium text-accent-700 hover:underline;
+    color: var(--accent);
+    font-weight: 500;
   }
+  .link:hover {
+    text-decoration: underline;
+  }
+  .page-title {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 36px;
+  }
+  .page-subtitle {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 20px;
+  }
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 22px;
+  }
+  .eyebrow {
+    color: var(--muted);
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    line-height: 16px;
+    text-transform: uppercase;
+  }
+
+  /* ---------- Tables ---------- */
+  .table-scroll {
+    overflow-x: auto;
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+  }
+  .data-table th {
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    line-height: 16px;
+    text-transform: uppercase;
+  }
+  .data-table td {
+    padding: 12px 18px;
+    vertical-align: middle;
+  }
+  .data-table tbody tr + tr td {
+    border-top: 1px solid rgba(255, 255, 255, 0.09);
+  }
+  .cell-link {
+    color: inherit;
+  }
+  .cell-link:hover {
+    text-decoration: underline;
+  }
+  .cell-title {
+    display: block;
+    font-weight: 500;
+    line-height: 19px;
+  }
+  .cell-sub {
+    display: block;
+    color: var(--muted);
+    font-size: 13.5px;
+    line-height: 19px;
+  }
+
+  /* ---------- App shell ---------- */
+  .shell {
+    display: flex;
+    gap: 20px;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .shell-main {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 8px 12px;
+  }
+  .sidebar {
+    position: sticky;
+    top: 20px;
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    width: 236px;
+    height: calc(100vh - 40px);
+    padding: 22px 15px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .brand-tile {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    flex: none;
+    place-items: center;
+    background: linear-gradient(135deg, #7c9bff, #5be0a4);
+    border-radius: 10px;
+    color: var(--accent-ink);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .nav-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 25px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 42px;
+    padding: 0 12px;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .nav-item:hover {
+    background: var(--glass);
+  }
+  .nav-item:focus-visible {
+    border-radius: 11px;
+  }
+  .nav-item-active {
+    background: var(--glass-strong);
+    border-color: var(--line-strong);
+    color: var(--ink);
+  }
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 20px 8px 0;
+    border-top: 1px solid var(--line);
+  }
+
+  /* ---------- Page layout ---------- */
+  .page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .page-stack > * + * {
+    margin-top: 20px;
+  }
+
+  /* ---------- Login ---------- */
+  .login-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .login-card {
+    display: grid;
+    grid-template-columns: 571fr 529fr;
+    width: 100%;
+    max-width: 1100px;
+    min-height: 640px;
+  }
+  .login-intro {
+    display: flex;
+    flex-direction: column;
+    padding: 52px;
+    border-right: 1px solid var(--line);
+  }
+  .login-pitch {
+    margin: auto 0;
+    padding: 40px 0;
+  }
+  .login-headline {
+    font-size: 38px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 44.5px;
+  }
+  .login-support {
+    margin-top: 15px;
+    max-width: 430px;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 24px;
+  }
+  .login-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 28px;
+    min-height: 21px;
+    color: var(--muted);
+  }
+  .login-stats b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .login-panel {
+    display: flex;
+    flex-direction: column;
+    padding: 52px;
+  }
+  .login-form {
+    display: grid;
+    flex: 1;
+    grid-template-rows: 1fr 1fr auto;
+    margin-top: 14px;
+  }
+  .demo-box {
+    margin-top: 20px;
+    padding: 9px 14px;
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--radius-ctl);
+    font-size: 13.5px;
+    line-height: 20px;
+  }
+
+  /* ---------- Loading, error and empty states ---------- */
+  .state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 44px 22px;
+    text-align: center;
+  }
+  .skeleton {
+    display: block;
+    height: 14px;
+    background: linear-gradient(90deg, var(--glass), var(--glass-strong), var(--glass));
+    background-size: 200% 100%;
+    border-radius: 7px;
+    animation: skeleton-shimmer 1.4s linear infinite;
+  }
+  @keyframes skeleton-shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+  .notice {
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-ctl);
+    font-size: 14px;
+    line-height: 21px;
+  }
+  .notice-bad {
+    background: var(--bad-bg);
+    border-color: var(--bad-line);
+  }
+  .notice-warn {
+    background: var(--warn-bg);
+    border-color: var(--warn-line);
+  }
+
+  /* ---------- Dialog ---------- */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    overflow-y: auto;
+    background: rgba(10, 14, 28, 0.35);
+  }
+  .modal-open .shell-main {
+    opacity: 0.45;
+    filter: blur(6px);
+  }
+  .modal-open .sidebar {
+    opacity: 0.72;
+  }
+  .glass.modal-dialog {
+    width: 100%;
+    max-width: 520px;
+    margin: auto;
+    padding: 30px;
+    background: rgba(30, 36, 60, 0.55);
+  }
+  .modal-dialog:focus-visible {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      0 20px 50px rgba(0, 0, 0, 0.35);
+  }
+}
+
+/* Solid surfaces where glass isn't possible or isn't wanted. */
+@supports not (backdrop-filter: blur(1px)) {
+  .glass,
+  .glass.modal-dialog {
+    background: rgba(22, 27, 46, 0.92);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .glass.modal-dialog {
+    background: rgba(22, 27, 46, 0.92);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+/* Below 900px the sidebar becomes a top bar, and tables scroll inside their own container. */
+@media (max-width: 899.98px) {
+  .shell {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+  }
+  .shell-main {
+    padding: 0;
+  }
+  .sidebar {
+    position: static;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    height: auto;
+    padding: 12px;
+  }
+  .nav-list {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    flex-direction: row;
+    margin-top: 0;
+    overflow-x: auto;
+  }
+  .nav-item {
+    height: 40px;
+    gap: 8px;
+    padding: 0 10px;
+  }
+  .sidebar-footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 0;
+    padding: 0;
+    border-top: 0;
+    text-align: right;
+  }
+  .sidebar-footer-name,
+  .sidebar-footer-email {
+    display: none;
+  }
+  .page-title {
+    font-size: 24px;
+    line-height: 32px;
+  }
+  .login-page {
+    padding: 16px;
+  }
+  .login-card {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+  .login-intro {
+    gap: 24px;
+    padding: 24px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .login-pitch {
+    margin: 0;
+    padding: 0;
+  }
+  .login-headline {
+    font-size: 28px;
+    line-height: 34px;
+  }
+  .login-stats {
+    gap: 16px;
+  }
+  .login-panel {
+    padding: 24px;
+  }
+  .login-form {
+    grid-template-rows: none;
+    gap: 16px;
+  }
+}
+
+/* Aliases for screens that haven't moved to the shared components yet. */
+.input {
+  display: block;
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-ctl);
+  color: var(--ink);
+}
+.card {
+  background: var(--glass);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+}
+.btn-danger {
+  display: inline-flex;
+  height: 44px;
+  align-items: center;
+  padding: 0 18px;
+  border: 1px solid var(--bad-line);
+  border-radius: var(--radius-btn);
+  color: var(--bad);
 }

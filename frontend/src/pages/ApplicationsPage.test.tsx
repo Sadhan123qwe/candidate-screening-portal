@@ -101,7 +101,7 @@ describe("ApplicationsPage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("A database error occurred.");
 
     shouldFail = false;
-    await userEvent.setup().click(screen.getByRole("button", { name: "Try again" }));
+    await userEvent.setup().click(screen.getByRole("button", { name: "Retry" }));
 
     expect(await screen.findByRole("link", { name: "Ada Candidate" })).toBeInTheDocument();
   });
