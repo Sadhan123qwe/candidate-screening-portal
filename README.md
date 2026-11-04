@@ -82,6 +82,28 @@ project to a shorter path.
   Use `.venv\Scripts\python.exe -m alembic upgrade head` for migrations.
 - Use `npm.cmd` in place of `npm`.
 
+You can also run this first, which allows scripts in the current PowerShell window only. It has no effect if Group Policy
+sets the execution policy:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+
+Or use Git Bash, starting from the project root:
+
+```bash
+cd backend; python -m venv .venv; source .venv/Scripts/activate
+pip install -r requirements.txt; cp .env.example .env
+alembic upgrade head; python -m scripts.train; python -m scripts.seed
+uvicorn app.main:app --reload
+```
+
+Leave that running. Open a second Git Bash terminal in the project root and run:
+
+```bash
+cd frontend; npm install; npm run dev
+```
+
 ## Demo login
 
 | Email | Password |
