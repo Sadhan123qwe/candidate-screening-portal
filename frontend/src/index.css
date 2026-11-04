@@ -644,6 +644,33 @@
     margin: 8px -8px -12px 0;
   }
 
+  /* ---------- List beside a form ---------- */
+  .split-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.525fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 20px;
+  }
+  .form-stack > * + * {
+    margin-top: 16px;
+  }
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 14px;
+  }
+  .skill-remove {
+    display: inline-flex;
+    border-radius: 7px;
+  }
+  .skill-remove:focus-visible {
+    border-radius: 7px;
+  }
+  .skill-remove:hover .skill-tag {
+    border-color: var(--bad-line);
+    color: var(--bad);
+  }
+
   /* ---------- Login ---------- */
   .login-page {
     display: flex;
@@ -767,8 +794,8 @@
     background: rgba(10, 14, 28, 0.35);
   }
   .modal-open .shell-main {
-    opacity: 0.45;
-    filter: blur(6px);
+    opacity: 0.4;
+    filter: blur(7px);
   }
   .modal-open .sidebar {
     opacity: 0.72;
@@ -779,6 +806,15 @@
     margin: auto;
     padding: 30px;
     background: rgba(30, 36, 60, 0.55);
+  }
+  .modal-close {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    flex: none;
+    place-items: center;
+    margin: -2px -2px 0 0;
+    color: var(--ink);
   }
   .modal-dialog:focus-visible {
     box-shadow:
@@ -811,6 +847,12 @@
 }
 
 /* Below 900px the sidebar becomes a top bar, and tables scroll inside their own container. */
+@media (max-width: 1099.98px) {
+  .split-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 @media (max-width: 899.98px) {
   .shell {
     flex-direction: column;

@@ -211,29 +211,79 @@ describe("ApplicationsPage", () => {
     await waitFor(() => expect(screen.getByRole("combobox", { name: "Status for Ada Candidate" })).toHaveValue("Rejected"));
   });
 
-  it("shows the duplicate message inline in the assign modal", async () => {
-    mockFetch((url, init) => {
-      if (url.pathname === "/api/jobs") {
-        return jsonResponse([{ id: 20, title: "React Intern" }]);
-      }
+  /** The assign modal needs real choices, and each test decides how the POST responds. */
+  function mockAssignApi(createResponse: () => Response) {
+    return mockFetch((url, init) => {
+      if (url.pathname === "/api/jobs") return jsonResponse([{ id: 20, title: "React Intern" }]);
+      if (url.pathname === "/api/stats") return jsonResponse({ jobs: 1, candidates: 1, applications: 0 });
+      if (url.pathname === "/api/applications/summary") return jsonResponse(SUMMARY);
       if (url.pathname === "/api/candidates") {
         return jsonResponse([{ id: 10, name: "Ada Candidate", email: "ada@example.com" }]);
       }
-      if (init?.method === "POST") {
-        return jsonResponse({ detail: "This candidate has already applied to this job.", code: "DUPLICATE_APPLICATION" }, 409);
-      }
+      if (init?.method === "POST") return createResponse();
       return jsonResponse(pageOf([]));
     });
-    renderWithProviders(<ApplicationsPage />);
-    const user = userEvent.setup();
+  }
 
+  async function submitAssignment() {
+    const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "+ Assign candidate" }));
     const dialog = await screen.findByRole("dialog");
     await user.selectOptions(await within(dialog).findByLabelText("Candidate"), "10");
     await user.selectOptions(within(dialog).getByLabelText("Job"), "20");
     await user.click(within(dialog).getByRole("button", { name: "Assign" }));
+    return dialog;
+  }
 
-    expect(await within(dialog).findByRole("alert")).toHaveTextContent("already applied");
+  it("shows the duplicate message inline in the assign modal", async () => {
+    mockAssignApi(() => jsonResponse({ detail: "This candidate has already applied to this job.", code: "DUPLICATE_APPLICATION" }, 409));
+    renderWithProviders(<ApplicationsPage />);
+
+    const dialog = await submitAssignment();
+
+    const banner = await within(dialog).findByRole("alert");
+    expect(banner).toHaveTextContent("Already applied. Ada Candidate has an application for React Intern.");
+    expect(within(banner).getByRole("link", { name: "open the existing application" })).toHaveAttribute(
+      "href",
+      "/applications?job_id=20&search=ada%40example.com",
+    );
     expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("doesn't offer to open a duplicate that was soft-deleted", async () => {
+    const detail = "This candidate previously applied to this job, and that application was deleted.";
+    mockAssignApi(() => jsonResponse({ detail, code: "DUPLICATE_APPLICATION" }, 409));
+    renderWithProviders(<ApplicationsPage />);
+
+    const dialog = await submitAssignment();
+
+    const banner = await within(dialog).findByRole("alert");
+    expect(banner).toHaveTextContent(detail);
+    expect(within(banner).queryByRole("link")).not.toBeInTheDocument();
+  });
+
+  it("keeps keyboard focus inside the assign modal, closes on Esc and restores focus", async () => {
+    mockAssignApi(() => jsonResponse({}));
+    renderWithProviders(<ApplicationsPage />);
+    const user = userEvent.setup();
+
+    const opener = screen.getByRole("button", { name: "+ Assign candidate" });
+    await user.click(opener);
+    const dialog = await screen.findByRole("dialog");
+    await within(dialog).findByLabelText("Candidate");
+    expect(dialog).toHaveFocus();
+
+    // Tab all the way around: focus must wrap and never leave the dialog.
+    for (let press = 0; press < 8; press += 1) {
+      await user.tab();
+      expect(dialog).toContainElement(document.activeElement as HTMLElement);
+    }
+    await user.tab({ shift: true });
+    expect(dialog).toContainElement(document.activeElement as HTMLElement);
+
+    await user.keyboard("{Escape}");
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(opener).toHaveFocus();
   });
 });
