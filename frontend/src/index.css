@@ -41,8 +41,9 @@
     pointer-events: none;
   }
   .blob-blue {
+    /* Far enough left to light the sidebar without washing out the page titles beside it. */
     top: -140px;
-    left: -160px;
+    left: -230px;
     width: 620px;
     height: 620px;
     background: #3b5bff;
@@ -73,7 +74,7 @@
 
   /* ---------- Glass surface ---------- */
   .glass {
-    background: var(--glass);
+    background: linear-gradient(var(--glass), var(--glass)), var(--glass-under);
     border: 1px solid var(--line);
     border-radius: var(--radius-card);
     -webkit-backdrop-filter: blur(22px) saturate(140%);
@@ -160,7 +161,7 @@
   }
   .field-error {
     margin-top: 6px;
-    color: var(--bad);
+    color: var(--bad-text);
     font-size: 13px;
   }
   .field-hint {
@@ -268,12 +269,12 @@
     border-radius: 50%;
   }
   .badge-ok {
-    background: var(--ok-bg);
+    background: linear-gradient(var(--ok-bg), var(--ok-bg)), var(--pill-under);
     border-color: var(--ok-line);
     color: var(--ok);
   }
   .badge-warn {
-    background: var(--warn-bg);
+    background: linear-gradient(var(--warn-bg), var(--warn-bg)), var(--pill-under);
     border-color: var(--warn-line);
     color: var(--warn);
   }
@@ -302,17 +303,17 @@
     cursor: wait;
   }
   .status-applied {
-    background: var(--glass-strong);
+    background: linear-gradient(var(--glass-strong), var(--glass-strong)), var(--pill-under);
     border-color: var(--line);
     color: #dce1ee;
   }
   .status-shortlisted {
-    background: var(--info-bg);
+    background: linear-gradient(var(--info-bg), var(--info-bg)), var(--pill-under);
     border-color: rgba(124, 155, 255, 0.34);
     color: var(--info);
   }
   .status-rejected {
-    background: var(--bad-bg);
+    background: linear-gradient(var(--bad-bg), var(--bad-bg)), var(--pill-under);
     border-color: var(--bad-line);
     color: var(--bad);
   }
@@ -331,12 +332,12 @@
     white-space: nowrap;
   }
   .skill-tag-hit {
-    background: var(--ok-bg);
+    background: linear-gradient(var(--ok-bg), var(--ok-bg)), var(--pill-under);
     border-color: var(--ok-line);
     color: var(--ok);
   }
   .skill-tag-miss {
-    background: var(--bad-bg);
+    background: linear-gradient(var(--bad-bg), var(--bad-bg)), var(--pill-under);
     border-color: var(--bad-line);
     color: var(--bad);
   }
@@ -380,7 +381,7 @@
     font-family: var(--font-mono);
   }
   .link {
-    color: var(--accent);
+    color: var(--accent-text);
     font-weight: 500;
   }
   .link:hover {
@@ -711,21 +712,29 @@
   .model-side > * + * {
     margin-top: 18px;
   }
+  .matrix-scroll {
+    /* The table's spacing also applies outside the cells, so this pulls it back to the card's edges. */
+    margin: -7px -10px 0;
+    overflow-x: auto;
+  }
   .matrix {
-    /* The spacing also applies outside the cells, so the table is pulled back to the card's edges. */
-    width: calc(100% + 20px);
-    min-width: 500px;
-    margin: 3px -10px 0;
+    width: 100%;
+    min-width: 400px;
     border-collapse: separate;
     border-spacing: 10px;
     table-layout: fixed;
   }
   .matrix-corner {
-    width: 120px;
+    width: 22%;
   }
   .matrix th {
     font-weight: 400;
     text-align: center;
+  }
+  /* The browser leaves two gaps of spacing between a table's head and body, so this closes one. */
+  .matrix thead th {
+    position: relative;
+    top: 10px;
   }
   .matrix th[scope="row"] {
     text-align: left;
@@ -739,11 +748,11 @@
     border-radius: 12px;
   }
   .matrix-cell-ok {
-    background: var(--ok-bg);
+    background: linear-gradient(var(--ok-bg), var(--ok-bg)), var(--pill-under);
     border-color: var(--ok-line);
   }
   .matrix-cell-bad {
-    background: var(--bad-bg);
+    background: linear-gradient(var(--bad-bg), var(--bad-bg)), var(--pill-under);
     border-color: var(--bad-line);
   }
   .matrix-value {
@@ -874,11 +883,11 @@
     line-height: 21px;
   }
   .notice-bad {
-    background: var(--bad-bg);
+    background: linear-gradient(var(--bad-bg), var(--bad-bg)), var(--pill-under);
     border-color: var(--bad-line);
   }
   .notice-warn {
-    background: var(--warn-bg);
+    background: linear-gradient(var(--warn-bg), var(--warn-bg)), var(--pill-under);
     border-color: var(--warn-line);
   }
 
@@ -948,6 +957,22 @@
 }
 
 /* Below 900px the sidebar becomes a top bar, and tables scroll inside their own container. */
+/* Narrower laptops: tighter columns, so names and titles don't wrap onto three lines. */
+@media (max-width: 1359.98px) {
+  .data-table th,
+  .data-table td {
+    padding-right: 11px;
+    padding-left: 11px;
+  }
+  .data-table th:first-child,
+  .data-table td:first-child {
+    padding-left: 16px;
+  }
+  .model-side .data-table {
+    min-width: 340px;
+  }
+}
+
 @media (max-width: 1099.98px) {
   .split-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -955,6 +980,23 @@
 }
 
 @media (max-width: 899.98px) {
+  /* The desktop blobs would cover a whole phone screen, leaving no calm area for text. */
+  .blob-blue {
+    top: -150px;
+    left: -190px;
+    width: 340px;
+    height: 340px;
+  }
+  .blob-teal {
+    right: -190px;
+    width: 300px;
+    height: 300px;
+  }
+  .blob-violet {
+    bottom: -190px;
+    width: 280px;
+    height: 280px;
+  }
   .shell {
     flex-direction: column;
     gap: 16px;
@@ -982,8 +1024,8 @@
   }
   .nav-item {
     height: 40px;
-    gap: 8px;
-    padding: 0 10px;
+    gap: 6px;
+    padding: 0 7px;
   }
   .sidebar-footer {
     display: flex;
@@ -997,6 +1039,12 @@
   .sidebar-footer-name,
   .sidebar-footer-email {
     display: none;
+  }
+  /* On a phone, all four links fit on one line only without their icons. */
+  @media (max-width: 430px) {
+    .nav-item svg {
+      display: none;
+    }
   }
   .page-title {
     font-size: 24px;

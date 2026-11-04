@@ -26,7 +26,8 @@
 - Job and candidate lists aren't paginated, which is fine at this data size but wouldn't scale.
 - There is one recruiter role, with no per-user permissions.
 - Login has no rate limiting.
-- Frontend automated tests cover login and the applications screen. Other pages were checked by driving the app in a
+- Frontend automated tests cover login, applications, application detail, jobs, candidates and the model page. The job
+  and candidate detail pages have no automated tests of their own. Every screen was also checked by driving the app in a
   browser, using a throwaway script that isn't part of this repo.
 - Only the API-level tests were run on PostgreSQL. The file-based tests for backup, restore and seeding are SQLite-only.
 

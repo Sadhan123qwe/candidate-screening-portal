@@ -165,7 +165,7 @@ function ConfusionMatrix({ result }: { result: ClassificationResult }) {
   return (
     <GlassCard as="section" className="min-w-0">
       <h2 className="card-title">Confusion matrix</h2>
-      <div className="table-scroll">
+      <div className="matrix-scroll">
         <table className="matrix">
           <caption className="sr-only">The model's predictions compared with the real labels on the test set</caption>
           <thead>

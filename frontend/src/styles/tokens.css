@@ -1,15 +1,20 @@
 :root {
   --bg: #0a0e1c; /* page ground */
   --ink: #f4f6fb;
-  --muted: #aeb6cc;
-  --faint: #8790a8;
+  /* Lighter than the design's #AEB6CC and #8790A8, which measure as low as 1.7:1 over the vivid
+     blobs. These reach 4.5:1 everywhere while keeping the blobs at full strength. */
+  --muted: #cdd4e3;
+  --faint: #d3d9e8;
   --glass: rgba(255, 255, 255, 0.08);
   --glass-strong: rgba(255, 255, 255, 0.13);
   --line: rgba(255, 255, 255, 0.16);
   --line-strong: rgba(255, 255, 255, 0.26);
   --accent: #7c9bff;
   --accent-ink: #0b1020;
-  --ok: #5be0a4;
+  /* Accent as text. #7C9BFF stays for rings and dots, which don't need to reach 4.5:1. */
+  --accent-text: #bccbff;
+  /* Lighter than the design's #5BE0A4, for the same reason as --muted. */
+  --ok: #6df0b4;
   --ok-bg: rgba(91, 224, 164, 0.16);
   --ok-line: rgba(91, 224, 164, 0.3);
   --warn: #ffc266;
@@ -18,8 +23,14 @@
   --bad: #ff8a80;
   --bad-bg: rgba(255, 138, 128, 0.16);
   --bad-line: rgba(255, 138, 128, 0.3);
-  --info: #9db4ff;
+  /* Error text directly on glass, which has no tint of its own to darken it. */
+  --bad-text: #ffbdb6;
+  /* Lighter than the design's #9DB4FF, for the same reason as --muted. */
+  --info: #c3d1ff;
   --info-bg: rgba(124, 155, 255, 0.18);
+  /* Dark layers under the glass and the tinted pills, keeping their colour but giving text enough contrast. */
+  --glass-under: rgba(10, 14, 28, 0.3);
+  --pill-under: rgba(10, 14, 28, 0.45);
   --radius-card: 18px;
   --radius-ctl: 10px;
   --radius-btn: 12px;

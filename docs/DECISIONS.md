@@ -122,6 +122,28 @@ routes and defaults behave as before, and storage, models and migrations are unt
 - **Application search still covers name, email and job title.** The design's placeholder says "name, email or skill",
   but adding skills would change what an existing search returns, so the placeholder describes what search really does.
 
+## Glass redesign
+
+- **Some colours are lighter than the design's, to reach 4.5:1 contrast.** The design's text colours measure as low as
+  1.7:1 where glass sits over the bright blobs. Darkening the glass enough to fix that flattened the look, so the blobs
+  keep their specified size and opacity on desktop, and the fix goes on the text instead: `--muted`, `--faint`, `--ok`
+  and `--info` are lighter, with new `--accent-text` and `--bad-text`. Thin dark layers (`--glass-under`, `--pill-under`)
+  sit under the glass and tinted pills. The blue blob also moved 70px left, off the page titles. All of this is in
+  `src/styles/tokens.css` with a comment on each change. Contrast was measured against rendered pixels, not calculated
+  from the token values, because blur and blobs change what's behind the text.
+- **Blobs are smaller on phones.** At their desktop size they cover a whole 390px screen, leaving nowhere calm for text.
+- **Status pills are real `<select>` elements.** The select sits invisibly on top of the styled pill, so keyboard, screen
+  reader and touch behaviour all come from the browser, and there's no custom dropdown to maintain.
+- **Application details moved from a modal to a page**, at `/applications/:id`, so they can be linked to and refreshed.
+  The breadcrumb returns to the filtered list you came from.
+- **Delete isn't in the design, but stays available.** Soft delete is a required feature, so it sits as a quiet button at
+  the bottom of the Set status card.
+- **Cross-validation and training data stay on the Model page, collapsed.** The design leaves them out, but they were
+  already there and they're part of being honest about the model.
+- **Twenty-five rows per page, as before.** The design's mock-up shows 8, but that would mean more clicking for no gain.
+- **A 409 for a soft-deleted application keeps the server's wording.** The design's banner offers to open the existing
+  application, and a deleted one can't be opened.
+
 ## Testing
 
 - **`TEST_DATABASE_URL` lets the API tests run on PostgreSQL.** The concurrency and constraint tests behave differently

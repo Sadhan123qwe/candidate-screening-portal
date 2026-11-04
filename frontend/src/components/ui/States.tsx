@@ -18,7 +18,7 @@ export function LoadingState() {
 export function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <GlassCard padding="none" role="alert" className="state">
-      <p className="text-bad">{message}</p>
+      <p className="text-[color:var(--bad-text)]">{message}</p>
       <Button onClick={onRetry}>Retry</Button>
     </GlassCard>
   );
