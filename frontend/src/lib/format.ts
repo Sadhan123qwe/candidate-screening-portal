@@ -83,11 +83,3 @@ export function formatFeatureValue(name: string, value: number, counts: MatchCou
   }
 }
 
-/** "Python, SQL ,python" becomes ["python", "sql"]: the same cleaning the server applies. */
-export function parseSkills(text: string): string[] {
-  const skills = text
-    .split(",")
-    .map((skill) => skill.trim().toLowerCase())
-    .filter(Boolean);
-  return [...new Set(skills)];
-}
