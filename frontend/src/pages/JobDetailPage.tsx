@@ -6,11 +6,14 @@ import { useDeleteJob, useJob, useUpdateJob } from "../api/jobs";
 import type { Job, JobInput } from "../api/types";
 import { APPLICATION_STATUSES } from "../api/types";
 import { ApplicationsTable } from "../components/ApplicationsTable";
-import { ErrorNotice, WarningNotice } from "../components/FormParts";
 import { JobForm } from "../components/JobForm";
 import { Pagination } from "../components/Pagination";
 import { QueryBoundary } from "../components/QueryBoundary";
-import { SkillList } from "../components/SkillList";
+import { Button } from "../components/ui/Button";
+import { GlassCard } from "../components/ui/GlassCard";
+import { ErrorNotice, WarningNotice } from "../components/ui/Notice";
+import { PageHeader } from "../components/ui/PageHeader";
+import { SkillTag } from "../components/ui/SkillTag";
 import { formatYears } from "../lib/format";
 
 const PAGE_SIZE = 25;
@@ -20,12 +23,40 @@ export function JobDetailPage() {
   const job = useJob(jobId);
 
   return (
-    <div className="space-y-4">
-      <Link to="/jobs" className="link text-sm">
-        &larr; All jobs
-      </Link>
-      <QueryBoundary query={job}>{(data) => <JobSummary job={data} />}</QueryBoundary>
-      <JobApplications jobId={jobId} />
+    <div>
+      <QueryBoundary query={job}>
+        {(data) => (
+          <>
+            <nav aria-label="Breadcrumb" className="mb-[14px] flex flex-wrap gap-x-3 leading-5">
+              <Link to="/jobs" className="cell-link text-muted">
+                Jobs
+              </Link>
+              <span aria-hidden="true" className="text-muted">
+                /
+              </span>
+              <span aria-current="page">{data.title}</span>
+            </nav>
+            <JobSummary job={data} />
+          </>
+        )}
+      </QueryBoundary>
+      <div className="mt-5">
+        <JobApplications jobId={jobId} />
+      </div>
+    </div>
+  );
+}
+
+function SkillGroup({ title, skills }: { title: string; skills: string[] }) {
+  return (
+    <div>
+      <dt className="eyebrow">{title}</dt>
+      <dd className="skill-list mt-[10px]">
+        {skills.length === 0 && <span className="text-muted">None</span>}
+        {skills.map((skill) => (
+          <SkillTag key={skill} skill={skill} />
+        ))}
+      </dd>
     </div>
   );
 }
@@ -72,69 +103,63 @@ function JobSummary({ job }: { job: Job }) {
   }
 
   return (
-    <div className="card space-y-4 p-5">
-      <WarningNotice message={staleNotice} />
-      <ErrorNotice message={deleteJob.error?.message} />
-
-      {isEditing ? (
-        <JobForm
-          // A new version remounts the form, so it can't keep showing out-of-date values.
-          key={job.version}
-          job={job}
-          submitLabel="Save changes"
-          isSubmitting={updateJob.isPending}
-          serverError={updateJob.error}
-          onSubmit={handleSave}
-          onCancel={() => {
-            setIsEditing(false);
-            updateJob.reset();
-          }}
-        />
-      ) : (
-        <>
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">{job.title}</h1>
-              <p className="text-sm text-gray-600">Minimum experience: {formatYears(job.min_experience_years)}</p>
-            </div>
+    <>
+      <PageHeader
+        title={job.title}
+        subtitle={
+          <>
+            Minimum experience: <span className="num">{formatYears(job.min_experience_years)}</span>
+          </>
+        }
+        aside={
+          !isEditing && (
             <div className="flex gap-2">
-              <button type="button" className="btn-secondary" onClick={() => setIsEditing(true)}>
-                Edit
-              </button>
-              <button type="button" className="btn-danger" disabled={deleteJob.isPending} onClick={handleDelete}>
+              <Button onClick={() => setIsEditing(true)}>Edit</Button>
+              <Button className="btn-danger-text" disabled={deleteJob.isPending} onClick={handleDelete}>
                 Delete
-              </button>
+              </Button>
             </div>
-          </div>
+          )
+        }
+      />
 
-          {job.description && <p className="text-sm text-gray-700">{job.description}</p>}
+      <GlassCard as="section" className="space-y-4">
+        <WarningNotice message={staleNotice} />
+        <ErrorNotice message={deleteJob.error?.message} />
 
-          <dl className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <dt className="mb-1 text-sm font-medium text-gray-700">Required skills</dt>
-              <dd>
-                <SkillList skills={job.required_skills} />
-              </dd>
-            </div>
-            <div>
-              <dt className="mb-1 text-sm font-medium text-gray-700">Preferred skills</dt>
-              <dd>
-                <SkillList skills={job.preferred_skills} muted />
-              </dd>
-            </div>
-          </dl>
-
-          <dl className="grid grid-cols-3 gap-3 border-t border-gray-100 pt-4">
-            {APPLICATION_STATUSES.map((status) => (
-              <div key={status}>
-                <dt className="text-xs uppercase tracking-wide text-gray-500">{status}</dt>
-                <dd className="text-lg font-semibold tabular-nums text-gray-900">{job.application_counts[status]}</dd>
-              </div>
-            ))}
-          </dl>
-        </>
-      )}
-    </div>
+        {isEditing ? (
+          <JobForm
+            // A new version remounts the form, so it can't keep showing out-of-date values.
+            key={job.version}
+            job={job}
+            submitLabel="Save changes"
+            isSubmitting={updateJob.isPending}
+            serverError={updateJob.error}
+            onSubmit={handleSave}
+            onCancel={() => {
+              setIsEditing(false);
+              updateJob.reset();
+            }}
+          />
+        ) : (
+          <>
+            {job.description && <p className="text-muted">{job.description}</p>}
+            <dl className="grid gap-4 sm:grid-cols-2">
+              <SkillGroup title="Required skills" skills={job.required_skills} />
+              <SkillGroup title="Preferred skills" skills={job.preferred_skills} />
+            </dl>
+            <dl className="grid grid-cols-3 gap-3 border-t border-line pt-4">
+              {APPLICATION_STATUSES.map((status) => (
+                <div key={status}>
+                  <dt className="eyebrow">{status}</dt>
+                  <dd className="num mt-1 text-[24px] leading-[30px]">{job.application_counts[status]}</dd>
+                </div>
+              ))}
+            </dl>
+          </>
+        )}
+      </GlassCard>
+    </>
   );
 }
 
@@ -144,12 +169,14 @@ function JobApplications({ jobId }: { jobId: number }) {
   const applications = useApplications({ job_id: jobId, page, page_size: PAGE_SIZE });
 
   return (
-    <div className="card overflow-hidden">
-      <h2 className="border-b border-gray-200 px-4 py-3 text-sm font-semibold text-gray-900">Applications</h2>
+    <section className="page-stack" aria-label="Applications">
+      <h2 className="card-title">Applications</h2>
       <QueryBoundary query={applications} isEmpty={(data) => data.items.length === 0} emptyMessage="No applications for this job yet.">
         {(data) => (
           <>
-            <ApplicationsTable applications={data.items} hideJob />
+            <GlassCard padding="none" className="overflow-hidden">
+              <ApplicationsTable applications={data.items} hideJob />
+            </GlassCard>
             <Pagination
               page={data.page}
               pageSize={data.page_size}
@@ -159,6 +186,6 @@ function JobApplications({ jobId }: { jobId: number }) {
           </>
         )}
       </QueryBoundary>
-    </div>
+    </section>
   );
 }

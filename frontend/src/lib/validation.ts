@@ -17,7 +17,7 @@ export function validateName(value: string, label: string): string | undefined {
 
 export function validateEmail(value: string): string | undefined {
   if (!value.trim()) return "Email is required.";
-  if (!EMAIL_PATTERN.test(value.trim())) return "Enter a valid email address.";
+  if (!EMAIL_PATTERN.test(value.trim())) return "Enter a full email address, like name@company.com.";
   return undefined;
 }
 

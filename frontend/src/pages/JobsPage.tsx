@@ -1,76 +1,111 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCreateJob, useJobs } from "../api/jobs";
+import type { Job } from "../api/types";
 import { JobForm } from "../components/JobForm";
-import { Modal } from "../components/Modal";
 import { QueryBoundary } from "../components/QueryBoundary";
+import { Button } from "../components/ui/Button";
+import { GlassCard } from "../components/ui/GlassCard";
+import { PageHeader } from "../components/ui/PageHeader";
+import { SkillTag } from "../components/ui/SkillTag";
 import { formatYears } from "../lib/format";
+
+function totalApplications(job: Job): number {
+  const { Applied, Shortlisted, Rejected } = job.application_counts;
+  return Applied + Shortlisted + Rejected;
+}
 
 export function JobsPage() {
   const jobs = useJobs();
   const createJob = useCreateJob();
-  const [isCreating, setIsCreating] = useState(false);
+  const titleRef = useRef<HTMLInputElement>(null);
+  // A new key remounts the form, which is the simplest way to clear every field.
+  const [formKey, setFormKey] = useState(0);
 
-  function closeForm() {
-    setIsCreating(false);
+  function resetForm() {
+    setFormKey((key) => key + 1);
     createJob.reset();
   }
 
+  const count = jobs.data?.length;
+  const subtitle = "Required skills drive the prediction most.";
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Jobs</h1>
-        <button type="button" className="btn-primary" onClick={() => setIsCreating(true)}>
-          New job
-        </button>
-      </div>
+    <div>
+      <PageHeader
+        title="Jobs"
+        subtitle={count === undefined ? subtitle : `${count} open ${count === 1 ? "internship" : "internships"}. ${subtitle}`}
+        aside={
+          <Button variant="primary" onClick={() => titleRef.current?.focus()}>
+            + New job
+          </Button>
+        }
+      />
 
-      <div className="card overflow-hidden">
-        <QueryBoundary query={jobs} isEmpty={(list) => list.length === 0} emptyMessage="No jobs yet. Create the first one.">
-          {(list) => (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 text-sm">
-                <thead className="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
-                  <tr>
-                    <th className="px-4 py-2">Title</th>
-                    <th className="px-4 py-2">Min. experience</th>
-                    <th className="px-4 py-2 text-right">Applied</th>
-                    <th className="px-4 py-2 text-right">Shortlisted</th>
-                    <th className="px-4 py-2 text-right">Rejected</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 bg-white">
-                  {list.map((job) => (
-                    <tr key={job.id}>
-                      <td className="px-4 py-2">
-                        <Link className="link" to={`/jobs/${job.id}`}>
-                          {job.title}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-2 text-gray-600">{formatYears(job.min_experience_years)}</td>
-                      <td className="px-4 py-2 text-right tabular-nums text-gray-700">{job.application_counts.Applied}</td>
-                      <td className="px-4 py-2 text-right tabular-nums text-gray-700">{job.application_counts.Shortlisted}</td>
-                      <td className="px-4 py-2 text-right tabular-nums text-gray-700">{job.application_counts.Rejected}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </QueryBoundary>
-      </div>
+      <div className="split-grid">
+        <div>
+          <QueryBoundary
+            query={jobs}
+            isEmpty={(list) => list.length === 0}
+            emptyMessage="No jobs yet. Create the first one."
+            emptyAction={<Button onClick={() => titleRef.current?.focus()}>New job</Button>}
+          >
+            {(list) => (
+              <GlassCard padding="none" className="overflow-hidden">
+                <div className="table-scroll">
+                  <table className="data-table min-w-[560px]">
+                    <thead>
+                      <tr>
+                        <th scope="col">Job</th>
+                        <th scope="col">Required skills</th>
+                        <th scope="col" className="w-[76px]">
+                          Min exp.
+                        </th>
+                        <th scope="col">Applications</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {list.map((job) => (
+                        <tr key={job.id}>
+                          <td>
+                            <Link className="cell-link cell-title" to={`/jobs/${job.id}`}>
+                              {job.title}
+                            </Link>
+                          </td>
+                          <td>
+                            <div className="skill-list">
+                              {job.required_skills.map((skill) => (
+                                <SkillTag key={skill} skill={skill} />
+                              ))}
+                            </div>
+                          </td>
+                          <td className="num whitespace-nowrap">{formatYears(job.min_experience_years)}</td>
+                          <td className="num">{totalApplications(job)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </GlassCard>
+            )}
+          </QueryBoundary>
+        </div>
 
-      {isCreating && (
-        <Modal title="New job" onClose={closeForm}>
-          <JobForm
-            submitLabel="Create job"
-            isSubmitting={createJob.isPending}
-            serverError={createJob.error}
-            onSubmit={(input) => createJob.mutate(input, { onSuccess: closeForm })}
-            onCancel={closeForm}
-          />
-        </Modal>
-      )}
+        <GlassCard as="section" aria-label="New job" className="split-form">
+          <h2 className="card-title">New job</h2>
+          <div className="mt-[13px]">
+            <JobForm
+              key={formKey}
+              ref={titleRef}
+              submitLabel="Create job"
+              isSubmitting={createJob.isPending}
+              serverError={createJob.error}
+              onSubmit={(input) => createJob.mutate(input, { onSuccess: resetForm })}
+              onCancel={resetForm}
+            />
+          </div>
+        </GlassCard>
+      </div>
     </div>
   );
 }
