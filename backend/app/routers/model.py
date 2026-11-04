@@ -4,7 +4,7 @@ import json
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.auth import CurrentUser
@@ -12,6 +12,8 @@ from app.config import get_settings
 from app.db import DbSession
 from app.errors import AppError
 from app.ml import predictor as predictor_module
+from app.models import Application, Candidate, Job
+from app.schemas import PortalStats
 
 router = APIRouter(prefix="/api", tags=["model"])
 
@@ -36,6 +38,16 @@ def health(db: DbSession) -> JSONResponse:
         },
         status_code=200 if database_ok else 503,
     )
+
+
+@router.get("/stats")
+def portal_stats(db: DbSession) -> PortalStats:
+    """Public, because the login page shows these totals. It exposes nothing but counts."""
+
+    def active_count(model: type[Job] | type[Candidate] | type[Application]) -> int:
+        return db.scalar(select(func.count()).select_from(model).where(model.deleted_at.is_(None)))
+
+    return PortalStats(jobs=active_count(Job), candidates=active_count(Candidate), applications=active_count(Application))
 
 
 @router.get("/model/metrics")

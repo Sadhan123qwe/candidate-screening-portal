@@ -42,12 +42,19 @@ def _prediction_fields(application: Application) -> tuple[PredictionOut | None, 
 
 def _application_fields(application: Application) -> dict:
     prediction, message = _prediction_fields(application)
+    candidate, job = application.candidate, application.job
+    required = job.required_skill_names
+    candidate_skills = set(candidate.skill_names)
     return {
         "id": application.id,
         "candidate_id": application.candidate_id,
-        "candidate_name": application.candidate.name,
+        "candidate_name": candidate.name,
+        "candidate_email": candidate.email,
+        "candidate_experience_years": candidate.experience_years,
         "job_id": application.job_id,
-        "job_title": application.job.title,
+        "job_title": job.title,
+        "required_matched": sum(skill in candidate_skills for skill in required),
+        "required_total": len(required),
         "status": application.status,
         "version": application.version,
         "created_at": application.created_at,
@@ -64,17 +71,29 @@ def to_application_out(application: Application) -> ApplicationOut:
 def to_application_detail(application: Application) -> ApplicationDetail:
     predictor = predictor_module.get_predictor()
     contributions = predictor.explain(features_for(application)) if predictor.available else []
+    candidate, job = application.candidate, application.job
+    candidate_skills = candidate.skill_names
+    required = job.required_skill_names
+    preferred = job.preferred_skill_names
     return ApplicationDetail(
         **_application_fields(application),
-        candidate_email=application.candidate.email,
         top_features=[
             FeatureContributionOut(feature=item.feature, value=item.value, contribution=item.contribution)
             for item in contributions
         ],
+        candidate_profile_summary=candidate.profile_summary,
+        job_min_experience_years=job.min_experience_years,
+        experience_gap=candidate.experience_years - job.min_experience_years,
+        required_skills_matched=[skill for skill in required if skill in candidate_skills],
+        required_skills_missing=[skill for skill in required if skill not in candidate_skills],
+        preferred_skills_matched=[skill for skill in preferred if skill in candidate_skills],
+        preferred_skills_missing=[skill for skill in preferred if skill not in candidate_skills],
+        other_candidate_skills=[skill for skill in candidate_skills if skill not in required and skill not in preferred],
+        imported_from_dataset=application.external_ref is not None,
     )
 
 
-def _candidate_fields(candidate: Candidate) -> dict:
+def _candidate_fields(candidate: Candidate, application_count: int) -> dict:
     return {
         "id": candidate.id,
         "external_ref": candidate.external_ref,
@@ -86,11 +105,12 @@ def _candidate_fields(candidate: Candidate) -> dict:
         "version": candidate.version,
         "created_at": candidate.created_at,
         "updated_at": candidate.updated_at,
+        "application_count": application_count,
     }
 
 
-def to_candidate_out(candidate: Candidate) -> CandidateOut:
-    return CandidateOut(**_candidate_fields(candidate))
+def to_candidate_out(candidate: Candidate, application_count: int = 0) -> CandidateOut:
+    return CandidateOut(**_candidate_fields(candidate, application_count))
 
 
 def to_candidate_detail(db: Session, candidate: Candidate) -> CandidateDetail:
@@ -100,7 +120,7 @@ def to_candidate_detail(db: Session, candidate: Candidate) -> CandidateDetail:
         .order_by(Application.created_at.desc(), Application.id.desc())
     ).all()
     return CandidateDetail(
-        **_candidate_fields(candidate),
+        **_candidate_fields(candidate, len(applications)),
         applications=[to_application_out(application) for application in applications],
     )
 
@@ -116,6 +136,16 @@ def application_counts_by_job(db: Session) -> dict[int, ApplicationCounts]:
     for job_id, status, count in rows:
         setattr(counts.setdefault(job_id, ApplicationCounts()), status, count)
     return counts
+
+
+def application_counts_by_candidate(db: Session) -> dict[int, int]:
+    """One grouped query, so a list of candidates doesn't run a count per candidate."""
+    rows = db.execute(
+        select(Application.candidate_id, func.count())
+        .where(Application.deleted_at.is_(None))
+        .group_by(Application.candidate_id)
+    ).all()
+    return {candidate_id: count for candidate_id, count in rows}
 
 
 def to_job_out(job: Job, counts: ApplicationCounts | None = None) -> JobOut:

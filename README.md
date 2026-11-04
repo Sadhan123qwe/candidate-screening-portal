@@ -178,7 +178,7 @@ The rule: nothing a recruiter enters is ever lost, silently overwritten, duplica
 
 ## API overview
 
-Every route except login and health needs a `Authorization: Bearer <token>` header. Interactive docs are at
+Every route except login, health and stats needs a `Authorization: Bearer <token>` header. Interactive docs are at
 <http://localhost:8000/docs> while the server is running.
 
 | Method and path | Purpose |
@@ -186,11 +186,13 @@ Every route except login and health needs a `Authorization: Bearer <token>` head
 | `POST /api/auth/login` | Get a token |
 | `GET /api/auth/me` | Current user |
 | `GET /api/health` | Database reachable, model loaded, model version |
+| `GET /api/stats` | Active job, candidate and application totals, shown on the login page |
 | `GET, POST /api/jobs` | List or create jobs |
 | `GET, PATCH, DELETE /api/jobs/{id}` | Read (with counts by status), update or soft-delete a job |
 | `GET, POST /api/candidates` | List (`?search=` on name, email or skill) or create candidates |
 | `GET, PATCH, DELETE /api/candidates/{id}` | Read (with applications), update or soft-delete a candidate |
-| `GET, POST /api/applications` | Paginated list (`job_id`, `status`, `search`, `page`, `page_size`) or create. A duplicate returns 409 |
+| `GET, POST /api/applications` | Paginated list (`job_id`, `status`, `prediction`, `search`, `page`, `page_size`) or create. A duplicate returns 409 |
+| `GET /api/applications/summary` | Counts per status, for the same `job_id`, `prediction` and `search` filters as the list |
 | `GET, DELETE /api/applications/{id}` | Read (with prediction and top features) or soft-delete |
 | `PATCH /api/applications/{id}/status` | Change status. Requires `version` |
 | `GET /api/applications/{id}/history` | Status timeline |

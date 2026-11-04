@@ -100,6 +100,28 @@ Every non-obvious choice and the reason for it. Newest thinking is grouped by to
 - **The metrics page shows the confusion matrix as a table, not the PNG.** The numbers are readable and accessible, and
   the API doesn't need to serve image files. The PNG stays in `artifacts/` and in the model report.
 
+## Data added for the glass redesign
+
+The redesigned screens needed data the API didn't return. Everything below is read-only and additive: existing fields,
+routes and defaults behave as before, and storage, models and migrations are untouched. All of it is tested in
+`backend/tests/test_design_data.py`.
+
+- **`GET /api/applications/summary`** returns `{total, applied, shortlisted, rejected}` for the status filter chips. It
+  takes the list's `job_id`, `search` and `prediction` filters, but not `status`, so each chip shows how many rows
+  clicking it would give.
+- **`prediction` filter on `GET /api/applications`.** The design has a Prediction filter, and filtering in the browser
+  would only cover the current page. Leaving the parameter out gives the same results as before.
+- **`GET /api/stats`** returns job, candidate and application totals for the login page. It's public because that page
+  is shown before login, and it exposes only counts. `/api/health` was left alone, because its job is reporting health.
+- **New fields on application rows:** `candidate_email`, `candidate_experience_years`, `required_matched` and
+  `required_total`. They come from relationships that the list already loads, so they add no per-row queries.
+- **New fields on application detail:** the required and preferred skills split into matched and missing, other
+  candidate skills, the job minimum, the experience gap, the profile summary and `imported_from_dataset`. The last one
+  lets the timeline say a record came from the dataset rather than from a recruiter.
+- **`application_count` on candidates.** It comes from one grouped query, the same way jobs get their counts.
+- **Application search still covers name, email and job title.** The design's placeholder says "name, email or skill",
+  but adding skills would change what an existing search returns, so the placeholder describes what search really does.
+
 ## Testing
 
 - **`TEST_DATABASE_URL` lets the API tests run on PostgreSQL.** The concurrency and constraint tests behave differently

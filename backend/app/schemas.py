@@ -146,6 +146,7 @@ class CandidateOut(BaseModel):
     version: int
     created_at: datetime
     updated_at: datetime
+    application_count: int = 0
 
 
 # --- Applications ---
@@ -178,8 +179,12 @@ class ApplicationOut(BaseModel):
     id: int
     candidate_id: int
     candidate_name: str
+    candidate_email: str
+    candidate_experience_years: float
     job_id: int
     job_title: str
+    required_matched: int
+    required_total: int
     status: str
     version: int
     created_at: datetime
@@ -190,8 +195,16 @@ class ApplicationOut(BaseModel):
 
 
 class ApplicationDetail(ApplicationOut):
-    candidate_email: str
     top_features: list[FeatureContributionOut]
+    candidate_profile_summary: str
+    job_min_experience_years: float
+    experience_gap: float
+    required_skills_matched: list[str]
+    required_skills_missing: list[str]
+    preferred_skills_matched: list[str]
+    preferred_skills_missing: list[str]
+    other_candidate_skills: list[str]
+    imported_from_dataset: bool
 
 
 class ApplicationPage(BaseModel):
@@ -199,6 +212,19 @@ class ApplicationPage(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class ApplicationSummary(BaseModel):
+    total: int
+    applied: int
+    shortlisted: int
+    rejected: int
+
+
+class PortalStats(BaseModel):
+    jobs: int
+    candidates: int
+    applications: int
 
 
 class CandidateDetail(CandidateOut):

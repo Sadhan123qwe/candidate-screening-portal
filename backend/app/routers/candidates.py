@@ -8,14 +8,18 @@ from app.models import Candidate
 from app.schemas import CandidateCreate, CandidateDetail, CandidateOut, CandidateUpdate
 from app.services import candidates as candidate_service
 from app.services.common import get_active
-from app.services.presenters import to_candidate_detail, to_candidate_out
+from app.services.presenters import application_counts_by_candidate, to_candidate_detail, to_candidate_out
 
 router = APIRouter(prefix="/api/candidates", tags=["candidates"])
 
 
 @router.get("")
 def list_candidates(db: DbSession, _user: CurrentUser, search: str | None = None) -> list[CandidateOut]:
-    return [to_candidate_out(candidate) for candidate in candidate_service.list_candidates(db, search)]
+    counts = application_counts_by_candidate(db)
+    return [
+        to_candidate_out(candidate, counts.get(candidate.id, 0))
+        for candidate in candidate_service.list_candidates(db, search)
+    ]
 
 
 @router.post("", status_code=201)
@@ -30,7 +34,8 @@ def get_candidate(candidate_id: int, db: DbSession, _user: CurrentUser) -> Candi
 
 @router.patch("/{candidate_id}")
 def update_candidate(candidate_id: int, payload: CandidateUpdate, db: DbSession, user: CurrentUser) -> CandidateOut:
-    return to_candidate_out(candidate_service.update_candidate(db, candidate_id, payload, user))
+    candidate = candidate_service.update_candidate(db, candidate_id, payload, user)
+    return to_candidate_out(candidate, application_counts_by_candidate(db).get(candidate.id, 0))
 
 
 @router.delete("/{candidate_id}", status_code=204)

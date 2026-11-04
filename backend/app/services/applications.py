@@ -1,25 +1,29 @@
 """Business logic for applications: create, change status, soft delete."""
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import Select, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.errors import AppError, not_found
-from app.models import Application, ApplicationStatus, AuditAction, Candidate, Job, StatusHistory, User, utcnow
+from app.models import (
+    Application,
+    ApplicationStatus,
+    AuditAction,
+    Candidate,
+    Job,
+    Prediction,
+    PredictionLabel,
+    StatusHistory,
+    User,
+    utcnow,
+)
 from app.services.audit import record_audit, snapshot_application
 from app.services.common import assert_version, flush_checking_version, get_active
 from app.services.predictions import refresh_predictions
 
 
-def list_applications(
-    db: Session,
-    job_id: int | None,
-    status: ApplicationStatus | None,
-    search: str | None,
-    page: int,
-    page_size: int,
-) -> tuple[list[Application], int]:
-    """Return one page of active applications and the total number that match."""
+def _matching_applications(job_id: int | None, search: str | None, prediction: PredictionLabel | None) -> Select:
+    """Active applications matching every filter except status."""
     query = (
         select(Application)
         .join(Application.candidate)
@@ -28,8 +32,8 @@ def list_applications(
     )
     if job_id is not None:
         query = query.where(Application.job_id == job_id)
-    if status is not None:
-        query = query.where(Application.status == status.value)
+    if prediction is not None:
+        query = query.where(Application.prediction.has(Prediction.label == prediction.value))
     if search:
         # autoescape stops a typed % or _ from acting as a wildcard.
         query = query.where(
@@ -39,6 +43,22 @@ def list_applications(
                 Job.title.icontains(search, autoescape=True),
             )
         )
+    return query
+
+
+def list_applications(
+    db: Session,
+    job_id: int | None,
+    status: ApplicationStatus | None,
+    search: str | None,
+    page: int,
+    page_size: int,
+    prediction: PredictionLabel | None = None,
+) -> tuple[list[Application], int]:
+    """Return one page of active applications and the total number that match."""
+    query = _matching_applications(job_id, search, prediction)
+    if status is not None:
+        query = query.where(Application.status == status.value)
 
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     # The id tie-break keeps page contents stable when rows share a created_at.
@@ -48,6 +68,15 @@ def list_applications(
         .limit(page_size)
     ).all()
     return list(items), total
+
+
+def count_by_status(
+    db: Session, job_id: int | None, search: str | None, prediction: PredictionLabel | None
+) -> dict[str, int]:
+    """Count per status, using the same filters as the list so the numbers agree with it."""
+    matching = _matching_applications(job_id, search, prediction).subquery()
+    rows = db.execute(select(matching.c.status, func.count()).group_by(matching.c.status)).all()
+    return {status: count for status, count in rows}
 
 
 def _duplicate_application_error(db: Session, candidate_id: int, job_id: int) -> AppError:

@@ -6,12 +6,13 @@ from fastapi import APIRouter, Query
 
 from app.auth import CurrentUser
 from app.db import DbSession
-from app.models import Application, ApplicationStatus
+from app.models import Application, ApplicationStatus, PredictionLabel
 from app.schemas import (
     ApplicationCreate,
     ApplicationDetail,
     ApplicationOut,
     ApplicationPage,
+    ApplicationSummary,
     StatusHistoryOut,
     StatusUpdate,
 )
@@ -31,13 +32,32 @@ def list_applications(
     search: str | None = None,
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 25,
+    prediction: PredictionLabel | None = None,
 ) -> ApplicationPage:
-    items, total = application_service.list_applications(db, job_id, status, search, page, page_size)
+    items, total = application_service.list_applications(db, job_id, status, search, page, page_size, prediction)
     return ApplicationPage(
         items=[to_application_out(application) for application in items],
         total=total,
         page=page,
         page_size=page_size,
+    )
+
+
+# Declared before /{application_id}, which would otherwise try to read "summary" as an id.
+@router.get("/summary")
+def application_summary(
+    db: DbSession,
+    _user: CurrentUser,
+    job_id: int | None = None,
+    search: str | None = None,
+    prediction: PredictionLabel | None = None,
+) -> ApplicationSummary:
+    counts = application_service.count_by_status(db, job_id, search, prediction)
+    return ApplicationSummary(
+        total=sum(counts.values()),
+        applied=counts.get(ApplicationStatus.APPLIED.value, 0),
+        shortlisted=counts.get(ApplicationStatus.SHORTLISTED.value, 0),
+        rejected=counts.get(ApplicationStatus.REJECTED.value, 0),
     )
 
 
