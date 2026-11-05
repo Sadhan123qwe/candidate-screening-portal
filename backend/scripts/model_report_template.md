@@ -69,6 +69,20 @@ Scores are the mean ± standard deviation across the grouped folds.
 If the tie were broken on simplicity, Logistic Regression would be a reasonable choice. It is smaller and easier to
 explain. It was not switched to after the fact, because that would mean changing the selection rule.
 
+## Decision threshold
+
+Chosen before the test set was used, from {{threshold_selection.method}}. The rule, fixed in advance: adopt the threshold
+with the highest mean CV F1 only if it beats {{threshold_selection.default_threshold}} by at least
+{{threshold_selection.minimum_gain}}.
+
+| Threshold | Mean CV F1 |
+|---|---|
+| {{threshold_selection.default_threshold}} (default) | {{threshold_selection.default_mean_cv_f1|.4f}} |
+| {{threshold_selection.best_threshold}} (best found) | {{threshold_selection.best_mean_cv_f1|.4f}} |
+
+**Decision:** {{threshold_selection.reason}} The best threshold is picked and scored on the same predictions, which flatters
+it a little, and that's why a minimum gain is required.
+
 ## Test results
 
 Evaluated after the approach was final, at a decision threshold of {{decision_threshold}}. Re-running the script is

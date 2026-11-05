@@ -1,8 +1,20 @@
 {
   "model_name": "random_forest",
-  "model_version": "a71a100e917f",
-  "trained_at": "2026-11-05T06:19:12.587923+00:00",
+  "model_version": "66b05497c05a",
+  "trained_at": "2026-11-05T06:21:22.277650+00:00",
   "decision_threshold": 0.5,
+  "threshold_selection": {
+    "method": "Out-of-fold predictions from StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42), grouped by candidate_id, on training candidates only",
+    "default_threshold": 0.5,
+    "minimum_gain": 0.01,
+    "best_threshold": 0.45,
+    "best_mean_cv_f1": 0.7341818181818182,
+    "default_mean_cv_f1": 0.7263437101981577,
+    "gain": 0.00783810798366047,
+    "adopted": false,
+    "selected_threshold": 0.5,
+    "reason": "The best threshold, 0.45, beat 0.5 by only 0.0078 mean CV F1, which is below the required 0.01, so 0.5 was kept."
+  },
   "dataset": {
     "train_applications": 400,
     "test_applications": 100,

@@ -174,6 +174,18 @@ export interface ModelMetrics {
   model_version: string;
   trained_at: string;
   decision_threshold: number;
+  threshold_selection: {
+    method: string;
+    default_threshold: number;
+    minimum_gain: number;
+    best_threshold: number;
+    best_mean_cv_f1: number;
+    default_mean_cv_f1: number;
+    gain: number;
+    adopted: boolean;
+    selected_threshold: number;
+    reason: string;
+  };
   dataset: {
     train_applications: number;
     test_applications: number;

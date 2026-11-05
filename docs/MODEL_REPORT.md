@@ -72,6 +72,20 @@ The rule fixed in advance was "highest mean CV F1", so Random Forest was selecte
 If the tie were broken on simplicity, Logistic Regression would be a reasonable choice. It is smaller and easier to
 explain. It was not switched to after the fact, because that would mean changing the selection rule.
 
+## Decision threshold
+
+Chosen before the test set was used, from Out-of-fold predictions from StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42), grouped by candidate_id, on training candidates only. The rule, fixed in advance: adopt the threshold
+with the highest mean CV F1 only if it beats 0.5 by at least
+0.01.
+
+| Threshold | Mean CV F1 |
+|---|---|
+| 0.5 (default) | 0.7263 |
+| 0.45 (best found) | 0.7342 |
+
+**Decision:** The best threshold, 0.45, beat 0.5 by only 0.0078 mean CV F1, which is below the required 0.01, so 0.5 was kept. The best threshold is picked and scored on the same predictions, which flatters
+it a little, and that's why a minimum gain is required.
+
 ## Test results
 
 Evaluated after the approach was final, at a decision threshold of 0.5. Re-running the script is

@@ -20,6 +20,18 @@ function makeMetrics(test: ModelMetrics["test"]): ModelMetrics {
     model_version: "v123",
     trained_at: "2026-03-09T00:00:00Z",
     decision_threshold: 0.5,
+    threshold_selection: {
+      method: "Out-of-fold predictions",
+      default_threshold: 0.5,
+      minimum_gain: 0.01,
+      best_threshold: 0.47,
+      best_mean_cv_f1: 0.71,
+      default_mean_cv_f1: 0.705,
+      gain: 0.005,
+      adopted: false,
+      selected_threshold: 0.5,
+      reason: "The best threshold beat 0.5 by too little.",
+    },
     dataset: {
       train_applications: 300,
       test_applications: 100,
@@ -113,11 +125,12 @@ describe("ModelMetricsPage", () => {
     expect(screen.queryByText(/The model wins/)).not.toBeInTheDocument();
   });
 
-  it("keeps the cross-validation results available", async () => {
+  it("keeps the cross-validation results available, with the threshold decision", async () => {
     mockFetch(() => jsonResponse(makeMetrics({ baseline: result(), model: result() })));
     renderWithProviders(<ModelMetricsPage />);
 
     expect(await screen.findByText("Cross-validation and training data")).toBeInTheDocument();
+    expect(screen.getByText("The best threshold beat 0.5 by too little.")).toBeInTheDocument();
     expect(screen.getByText("C=1")).toBeInTheDocument();
   });
 

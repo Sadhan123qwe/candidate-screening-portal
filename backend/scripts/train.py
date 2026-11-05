@@ -40,8 +40,12 @@ DATA_DIR = BACKEND_DIR / "data"
 ARTIFACTS_DIR = BACKEND_DIR / "artifacts"
 
 RANDOM_STATE = 42
-# The brief fixes the operating point. Tuning it per job would need more data than we have.
-DECISION_THRESHOLD = 0.5
+# The starting operating point. select_threshold moves it only on clear evidence from
+# training data. Tuning it per job would need more data than we have.
+DEFAULT_THRESHOLD = 0.5
+# Fixed before looking at any result: a smaller gain could easily be noise.
+MIN_THRESHOLD_GAIN = 0.01
+THRESHOLD_GRID = [round(value, 2) for value in np.arange(0.05, 0.96, 0.01)]
 EXPECTED_TRAIN_ROWS = 400
 EXPECTED_TEST_ROWS = 100
 PERMUTATION_REPEATS = 10
@@ -230,6 +234,56 @@ def build_precision_recall_curve(y_true: pd.Series, probabilities: np.ndarray) -
     return {"average_precision": float(average_precision_score(y_true, probabilities)), "points": points}
 
 
+def out_of_fold_probabilities(estimator: Pipeline, X: pd.DataFrame, y: pd.Series, groups: pd.Series) -> list[tuple[np.ndarray, np.ndarray]]:
+    """For each grouped fold: the held-out labels, and probabilities from a model that never saw them."""
+    folds = []
+    for fit_rows, held_out_rows in make_cv().split(X, y, groups):
+        fitted = clone(estimator).fit(X.iloc[fit_rows], y.iloc[fit_rows])
+        folds.append((y.iloc[held_out_rows].to_numpy(), fitted.predict_proba(X.iloc[held_out_rows])[:, 1]))
+    return folds
+
+
+def mean_fold_f1(folds: list[tuple[np.ndarray, np.ndarray]], threshold: float) -> float:
+    return float(np.mean([f1_score(labels, probabilities >= threshold, zero_division=0) for labels, probabilities in folds]))
+
+
+def select_threshold(folds: list[tuple[np.ndarray, np.ndarray]]) -> dict:
+    """Keep the default unless another threshold clearly beats it on training folds only.
+
+    The best threshold is picked and scored on the same out-of-fold predictions, which
+    flatters it a little. MIN_THRESHOLD_GAIN is the guard against adopting that flattery.
+    """
+    scores = {threshold: mean_fold_f1(folds, threshold) for threshold in THRESHOLD_GRID}
+    # max() keeps the first of any tie, which is the lowest threshold.
+    best_threshold = max(scores, key=lambda threshold: scores[threshold])
+    default_f1 = mean_fold_f1(folds, DEFAULT_THRESHOLD)
+    gain = scores[best_threshold] - default_f1
+    adopted = gain >= MIN_THRESHOLD_GAIN
+    selected = best_threshold if adopted else DEFAULT_THRESHOLD
+    if adopted:
+        reason = (
+            f"Threshold {best_threshold} beat {DEFAULT_THRESHOLD} by {gain:.4f} mean CV F1, which reaches the required "
+            f"{MIN_THRESHOLD_GAIN}, so it was adopted."
+        )
+    else:
+        reason = (
+            f"The best threshold, {best_threshold}, beat {DEFAULT_THRESHOLD} by only {gain:.4f} mean CV F1, which is below "
+            f"the required {MIN_THRESHOLD_GAIN}, so {DEFAULT_THRESHOLD} was kept."
+        )
+    return {
+        "method": f"Out-of-fold predictions from {CV_DESCRIPTION}, on training candidates only",
+        "default_threshold": DEFAULT_THRESHOLD,
+        "minimum_gain": MIN_THRESHOLD_GAIN,
+        "best_threshold": best_threshold,
+        "best_mean_cv_f1": scores[best_threshold],
+        "default_mean_cv_f1": default_f1,
+        "gain": gain,
+        "adopted": adopted,
+        "selected_threshold": selected,
+        "reason": reason,
+    }
+
+
 def classification_summary(y_true: pd.Series, y_pred: np.ndarray) -> dict:
     precision, recall, f1, _ = precision_recall_fscore_support(
         y_true, y_pred, average="binary", pos_label=1, zero_division=0
@@ -277,7 +331,7 @@ def build_error_analysis(test_rows: pd.DataFrame, X_test: pd.DataFrame, probabil
     return {"decision_threshold": threshold, "test_applications": len(test_rows), "errors": errors}
 
 
-def build_model_version(params: dict, model_name: str) -> str:
+def build_model_version(params: dict, model_name: str, threshold: float) -> str:
     """A hash of data + parameters: retraining the same thing gives the same version.
 
     Stored predictions are only recomputed when the version changes, so a
@@ -287,7 +341,10 @@ def build_model_version(params: dict, model_name: str) -> str:
     for filename in ("ml_dataset.csv", "candidate_split.csv"):
         # Line endings are normalised so a Windows checkout hashes the same as Linux.
         digest.update((DATA_DIR / filename).read_bytes().replace(b"\r\n", b"\n"))
-    digest.update(json.dumps({"model": model_name, "params": params, "features": FEATURE_NAMES}, sort_keys=True).encode())
+    # The threshold decides the stored labels, so a new one has to trigger recomputing them.
+    digest.update(
+        json.dumps({"model": model_name, "params": params, "features": FEATURE_NAMES, "threshold": threshold}, sort_keys=True).encode()
+    )
     return digest.hexdigest()[:12]
 
 
@@ -348,24 +405,27 @@ def train() -> dict:
     has_all_required = X_train["has_all_required"] == 1
     best_model_summary = summarize_best_models(searches, X_train, y_train, groups_train)
     feature_importance = grouped_permutation_importance(pipeline, X_train, y_train, groups_train)
+    threshold_selection = select_threshold(out_of_fold_probabilities(pipeline, X_train, y_train, groups_train))
+    decision_threshold = threshold_selection["selected_threshold"]
 
     # --- The approach is final. The test set is used once, below. ---
     test_probabilities = pipeline.predict_proba(X_test)[:, 1]
-    model_predictions = (test_probabilities >= DECISION_THRESHOLD).astype(int)
+    model_predictions = (test_probabilities >= decision_threshold).astype(int)
     baseline_predictions = (X_test["required_overlap_ratio"] >= baseline["threshold"]).astype(int).to_numpy()
     model_metrics = classification_summary(y_test, model_predictions)
     baseline_metrics = classification_summary(y_test, baseline_predictions)
     pr_curve = build_precision_recall_curve(y_test, test_probabilities)
-    error_analysis = build_error_analysis(dataset[~is_train], X_test, test_probabilities, DECISION_THRESHOLD)
+    error_analysis = build_error_analysis(dataset[~is_train], X_test, test_probabilities, decision_threshold)
 
-    model_version = build_model_version(chosen_params, chosen_name)
+    model_version = build_model_version(chosen_params, chosen_name, decision_threshold)
     trained_at = datetime.now(timezone.utc).isoformat()
 
     metrics = {
         "model_name": chosen_name,
         "model_version": model_version,
         "trained_at": trained_at,
-        "decision_threshold": DECISION_THRESHOLD,
+        "decision_threshold": decision_threshold,
+        "threshold_selection": threshold_selection,
         "dataset": {
             "train_applications": len(X_train),
             "test_applications": len(X_test),
@@ -402,7 +462,7 @@ def train() -> dict:
         {
             "pipeline": pipeline,
             "feature_names": FEATURE_NAMES,
-            "threshold": DECISION_THRESHOLD,
+            "threshold": decision_threshold,
             "model_name": chosen_name,
             "model_version": model_version,
             "sklearn_version": sklearn.__version__,

@@ -258,6 +258,7 @@ function MoreDetail({ metrics }: { metrics: ModelMetrics }) {
           Version <span className="num">{metrics.model_version}</span>, trained {formatDateTime(metrics.trained_at)}. Decision threshold{" "}
           <span className="num">{metrics.decision_threshold}</span>. {metrics.cross_validation.method}.
         </p>
+        <p className="text-muted">{metrics.threshold_selection.reason}</p>
         <div className="table-scroll">
           <table className="data-table min-w-[560px]">
             <thead>

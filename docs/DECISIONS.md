@@ -107,6 +107,21 @@ Every non-obvious choice and the reason for it. Newest thinking is grouped by to
 - **The metrics page shows the confusion matrix as a table, not the PNG.** The numbers are readable and accessible, and
   the API doesn't need to serve image files. The PNG stays in `artifacts/` and in the model report.
 
+## Decision threshold
+
+- **The threshold is checked on training data, and moved only on clear evidence.** `select_threshold` in
+  `scripts/train.py` finds the threshold with the highest mean F1 across out-of-fold predictions from grouped CV on
+  training candidates, and adopts it only if it beats 0.5 by at least 0.01. That rule was fixed before seeing any result.
+  The test set plays no part.
+- **The decision and its reason are recorded, not retyped.** See `threshold_selection` in `backend/artifacts/metrics.json`
+  and the "Decision threshold" section of `docs/MODEL_REPORT.md`, which is generated from it. The result is also shown in
+  the details section of the Model page.
+- **The minimum gain exists because the check flatters itself.** The best threshold is picked and scored on the same
+  predictions, so a tiny gain is expected even from noise.
+- **`model_version` now includes the threshold.** Stored predictions are recomputed only when the version changes, so
+  without this a new threshold would leave old labels in the database. Including it changed the version once, with no
+  change to the model or its scores.
+
 ## Data added for the glass redesign
 
 The redesigned screens needed data the API didn't return. Everything below is read-only and additive: existing fields,
