@@ -2,13 +2,17 @@
 
 ## Time spent
 
-| Part | Hours |
-|---|---|
-| ML and model report | _to fill in_ |
-| Storage and backend | _to fill in_ |
-| Frontend | _to fill in_ |
-| Documentation and review | _to fill in_ |
-| **Total** | _to fill in_ |
+| Part | Hours | What it covered |
+|---|---|---|
+| Understanding the brief and the dataset | 1.0 | Read the assignment and dataset README, explored the data, checked label balance and a first baseline |
+| Planning and architecture | 1.5 | Chose the stack, designed the storage rules and API, wrote the build spec |
+| Backend, storage and API | 2.5 | FastAPI, SQLAlchemy + Alembic, seed, audit log, versioning, backup/restore, tests |
+| Machine learning | 2.0 | Features, baseline, grouped CV, threshold check, test evaluation, error analysis, model report |
+| Frontend and UI design | 2.0 | React pages, glass design, loading/error/empty states, frontend tests |
+| Review, docs, CI and video | 2.0 | Reading and checking the code, README, CI on GitHub, walkthrough video |
+| **Total** | **11.0** | Within the suggested 8–12 hours |
+
+Most code was generated with Claude Code from specifications I wrote. My time went into planning, writing those specifications, reviewing and testing the output, checking the ML method, and making decisions. I have read the code and can explain and change any part of it.
 
 ## Completed
 
@@ -47,5 +51,6 @@ Nothing from the final polish round was reverted or left out.
 ## AI tools and external code
 
 - **Claude Code** (Anthropic) was used to build this project, including code, tests and documentation.
+- Video narration uses an offline AI text-to-speech voice; the script describes my own work.
 - No code was copied from other projects. Open-source libraries are listed in `backend/requirements.txt` and
   `frontend/package.json`.
