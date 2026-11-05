@@ -99,10 +99,6 @@ export function LoginPage() {
               {login.isPending ? "Logging in..." : "Log in"}
             </Button>
           </form>
-          <div className="demo-box">
-            <p className="text-muted">Demo account</p>
-            <p className="num mt-0.5">recruiter@demo.com &middot; Demo@12345</p>
-          </div>
         </section>
       </GlassCard>
     </div>

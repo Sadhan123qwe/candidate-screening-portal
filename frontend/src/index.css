@@ -875,14 +875,6 @@
     grid-template-rows: 1fr 1fr auto;
     margin-top: 14px;
   }
-  .demo-box {
-    margin-top: 20px;
-    padding: 9px 14px;
-    border: 1px dashed var(--line-strong);
-    border-radius: var(--radius-ctl);
-    font-size: 13.5px;
-    line-height: 20px;
-  }
 
   /* ---------- Loading, error and empty states ---------- */
   .state {
@@ -1016,9 +1008,6 @@
   .login-form {
     grid-template-rows: none;
     gap: 14px;
-    margin-top: 14px;
-  }
-  .demo-box {
     margin-top: 14px;
   }
 }
