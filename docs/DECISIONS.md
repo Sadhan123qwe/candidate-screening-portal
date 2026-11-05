@@ -88,10 +88,11 @@ Every non-obvious choice and the reason for it. Newest thinking is grouped by to
 
 ## Frontend
 
-- **Node support is split: 18+ to run the app, 22.12+ for its tests.** The brief asks for Node 18+, and `vite` 6 supports
-  it. A production build was verified on Node 18.20. But every Vitest release that runs on Node 18 has a critical
-  `npm audit` finding, and the fixed releases need Node 22.12+. Clean audits seemed worth asking a little more of whoever
-  runs the frontend tests, since the app itself still runs on Node 18.
+- **CI uses Node 20.** Every Vitest release that runs on Node 18 has a critical `npm audit` finding, and the fixed
+  releases list Node 22.12+ as their requirement. The tests and build do pass on Node 20 in practice, so CI runs them there.
+- **CI checks the report before retraining, then rebuilds it after.** Numbers could differ slightly on another operating
+  system, which isn't drift. Checking the committed report against the committed artifacts catches real drift on any
+  platform, without failing on that difference.
 - **React Router 7 rather than 6.** Version 6 has an open-redirect advisory fixed only in 7. Version 7 still supports
   React 18, and the migration was a one-line change. Its package declares Node 20+, but it runs in the browser, and the
   Node 18 build still works.

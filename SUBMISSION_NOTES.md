@@ -19,6 +19,19 @@
 - Full REST API with validation, consistent errors and JWT authentication
 - All frontend pages, with loading, error and empty states and stale-update handling
 - Backend and frontend test suites, and documentation
+- Glass redesign of every screen, with contrast measured on the rendered pages
+- Error analysis of every test-set mistake, saved by training and served by `GET /api/model/errors`
+- GitHub Actions CI for the backend and frontend, rehearsed in a clean clone but not yet run on GitHub
+- Cross-validation mean and spread for each model, a test-set precision-recall curve, and permutation feature importance
+  on held-out training folds, all shown on the Model page
+- A decision-threshold check on out-of-fold training predictions, with the decision and reason recorded
+- A model report and README results generated from the training artifacts, with a test that catches drift
+- Server-side sorting of applications, CSV export of the filtered list, and status and Potential Match counts per job
+- A verified Quick start, screenshots of the running app, and a "What I'd do next" list
+
+## Not done
+
+Nothing from the final polish round was reverted or left out.
 
 ## Incomplete or limited
 

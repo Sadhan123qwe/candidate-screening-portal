@@ -3,10 +3,47 @@
 <!-- Replace OWNER/REPO with the GitHub path once this repository has a remote. -->
 [![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
 
+## Quick start (about 2 minutes)
+
+These are the exact Git Bash commands, run in a clean clone on Windows. Replace `<repo-url>` with this repository's
+address. You need Python 3.11+ and Node 20+. Keep the project in a short path, because of the Windows path limit.
+
+**Terminal 1: backend**
+
+```bash
+git clone <repo-url> candidate-screening-portal
+cd candidate-screening-portal/backend
+python -m venv .venv
+source .venv/Scripts/activate
+pip install -r requirements.txt
+cp .env.example .env
+alembic upgrade head
+python -m scripts.seed
+python -m uvicorn app.main:app
+```
+
+**Terminal 2: frontend**, from the folder you cloned into
+
+```bash
+cd candidate-screening-portal/frontend
+npm ci
+npm run dev
+```
+
+Open <http://localhost:5173> and log in with `recruiter@demo.com` / `Demo@12345`.
+
+## What it does
+
 A recruiter portal for managing jobs, candidates and applications, with an integrated ML model that suggests which
 applications look like a potential match. Built as a take-home assignment for Rock One Solutions.
 
 The model only ever suggests. An application's status changes only when a recruiter changes it.
+
+![The Applications screen, with status counts, filters and predictions](docs/screenshots/applications.png)
+
+![An application's detail page, showing skills against the job and why the model scored it as it did](docs/screenshots/application-detail.png)
+
+![The Model page, with test results against the baseline, the precision-recall curve and feature importance](docs/screenshots/model.png)
 
 All data is synthetic. The dataset is in `backend/data/`, and its own rules are in `backend/data/README.md`.
 
@@ -14,7 +51,7 @@ All data is synthetic. The dataset is in `backend/data/`, and its own rules are 
 
 | Layer | Choice |
 |---|---|
-| Frontend | React 18, Vite, TypeScript, React Router, TanStack Query, Tailwind CSS |
+| Frontend | React 18, Vite, TypeScript, React Router, TanStack Query, Tailwind CSS, Recharts |
 | Backend | Python 3.11+, FastAPI, Pydantic v2, Uvicorn |
 | Database | SQLAlchemy 2.0 ORM, Alembic migrations, SQLite by default, PostgreSQL by changing `DATABASE_URL` |
 | Auth | JWT bearer tokens (PyJWT), passwords hashed with bcrypt |
@@ -49,8 +86,8 @@ More detail is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), and the reasonin
 ## Prerequisites
 
 - Python 3.11+
-- Node 18+ to build and run the frontend. The frontend **tests** need Node 22.12+, because the Vitest version that has
-  no known vulnerabilities requires it.
+- Node 20+. CI runs the frontend tests and build on Node 20. Vitest officially lists Node 22.12+, so use that if a
+  future update stops working on 20.
 
 ## Setup (PowerShell)
 
@@ -220,6 +257,14 @@ Updates (`PATCH`) must send the `version` they read. Deletes accept an optional 
 The model beats a one-line rule by one application out of 100, which isn't a meaningful difference. The labels are mostly driven by skill coverage, so a simple rule already captures most of the signal. The full results and limitations
 are in [docs/MODEL_REPORT.md](docs/MODEL_REPORT.md).
 <!-- model-results:end -->
+
+## What I'd do next
+
+- Add an endpoint to restore soft-deleted records, which currently takes a database change.
+- Rate-limit login.
+- Try per-job thresholds, which would need more data for each job than this dataset has.
+- Run PostgreSQL in production, with automated backups to match the SQLite tooling.
+- Run fairness checks with real data, which the synthetic data can't support.
 
 ## Assumptions
 
