@@ -173,6 +173,40 @@ def classification_summary(y_true: pd.Series, y_pred: np.ndarray) -> dict:
     }
 
 
+def build_error_analysis(test_rows: pd.DataFrame, X_test: pd.DataFrame, probabilities: np.ndarray, threshold: float) -> dict:
+    """Describe every test-set mistake, for the report. Nothing in training reads this file.
+
+    Names, emails and candidate ids are deliberately left out.
+    """
+    titles = pd.read_csv(DATA_DIR / "jobs.csv").set_index("job_id")["title"]
+    errors = []
+    for position, row in enumerate(test_rows.itertuples()):
+        probability = float(probabilities[position])
+        predicted = int(probability >= threshold)
+        if predicted == row.match_label:
+            continue
+        required = split_skills(row.required_skills)
+        candidate_skills = set(split_skills(row.candidate_skills))
+        features = X_test.iloc[position]
+        errors.append(
+            {
+                "application_id": row.application_id,
+                "error_type": "false_positive" if predicted == 1 else "false_negative",
+                "job_title": str(titles[row.job_id]),
+                "required_overlap_ratio": float(features["required_overlap_ratio"]),
+                "required_skills_total": len(required),
+                "missing_required_skills": [skill for skill in required if skill not in candidate_skills],
+                "experience_years": float(row.experience_years),
+                "minimum_experience_years": float(row.minimum_experience_years),
+                "meets_experience": bool(features["meets_experience"]),
+                "predicted_probability": probability,
+                "true_label": int(row.match_label),
+            }
+        )
+    errors.sort(key=lambda error: (error["error_type"], -error["predicted_probability"], error["application_id"]))
+    return {"decision_threshold": threshold, "test_applications": len(test_rows), "errors": errors}
+
+
 def build_model_version(params: dict, model_name: str) -> str:
     """A hash of data + parameters: retraining the same thing gives the same version.
 
@@ -249,6 +283,7 @@ def train() -> dict:
     baseline_predictions = (X_test["required_overlap_ratio"] >= baseline["threshold"]).astype(int).to_numpy()
     model_metrics = classification_summary(y_test, model_predictions)
     baseline_metrics = classification_summary(y_test, baseline_predictions)
+    error_analysis = build_error_analysis(dataset[~is_train], X_test, test_probabilities, DECISION_THRESHOLD)
 
     model_version = build_model_version(chosen_params, chosen_name)
     trained_at = datetime.now(timezone.utc).isoformat()
@@ -303,6 +338,7 @@ def train() -> dict:
         ARTIFACTS_DIR / "model.joblib",
     )
     (ARTIFACTS_DIR / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+    (ARTIFACTS_DIR / "error_analysis.json").write_text(json.dumps(error_analysis, indent=2), encoding="utf-8")
     draw_confusion_matrices(baseline_metrics, model_metrics, chosen_name, ARTIFACTS_DIR / "confusion_matrix.png")
     return metrics
 

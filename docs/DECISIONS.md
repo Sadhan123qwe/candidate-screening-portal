@@ -78,6 +78,13 @@ Every non-obvious choice and the reason for it. Newest thinking is grouped by to
 - **Top features are computed on read, not stored.** They aren't in the required schema, and stored predictions are
   already refreshed whenever the inputs change, so the two can't disagree.
 - **Replacement contributions for the random forest.** See `docs/MODEL_REPORT.md`.
+- **The model report is generated from the artifacts.** `scripts/build_report.py` fills
+  `scripts/model_report_template.md` from `metrics.json` and `error_analysis.json`, and a test fails if the committed
+  report or README results are out of date. Numbers can't drift, and sentences that depend on a result, such as how the
+  model compares with the baseline, are worked out from it.
+- **`GET /api/model/errors` includes the true label of test-set mistakes.** `match_label` otherwise stays out of the
+  portal. This is the one deliberate exception: it needs a login, covers only held-out test applications, and has no
+  names or emails. Nothing in training reads the error analysis, so it can't leak into the model.
 
 ## Frontend
 

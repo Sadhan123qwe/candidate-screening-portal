@@ -1,0 +1,188 @@
+{
+  "decision_threshold": 0.5,
+  "test_applications": 100,
+  "errors": [
+    {
+      "application_id": "A0369",
+      "error_type": "false_negative",
+      "job_title": "Python Backend Intern",
+      "required_overlap_ratio": 0.6666666666666666,
+      "required_skills_total": 3,
+      "missing_required_skills": [
+        "fastapi"
+      ],
+      "experience_years": 0.25,
+      "minimum_experience_years": 0.5,
+      "meets_experience": false,
+      "predicted_probability": 0.33401261632705304,
+      "true_label": 1
+    },
+    {
+      "application_id": "A0002",
+      "error_type": "false_negative",
+      "job_title": "QA Automation Intern",
+      "required_overlap_ratio": 0.3333333333333333,
+      "required_skills_total": 3,
+      "missing_required_skills": [
+        "testing",
+        "selenium"
+      ],
+      "experience_years": 2.0,
+      "minimum_experience_years": 0.0,
+      "meets_experience": true,
+      "predicted_probability": 0.12800706423791633,
+      "true_label": 1
+    },
+    {
+      "application_id": "A0091",
+      "error_type": "false_positive",
+      "job_title": "DevOps Intern",
+      "required_overlap_ratio": 0.6666666666666666,
+      "required_skills_total": 3,
+      "missing_required_skills": [
+        "git"
+      ],
+      "experience_years": 0.25,
+      "minimum_experience_years": 1.0,
+      "meets_experience": false,
+      "predicted_probability": 0.8472935617928629,
+      "true_label": 0
+    },
+    {
+      "application_id": "A0075",
+      "error_type": "false_positive",
+      "job_title": "Next.js Developer Intern",
+      "required_overlap_ratio": 0.6666666666666666,
+      "required_skills_total": 3,
+      "missing_required_skills": [
+        "nextjs"
+      ],
+      "experience_years": 1.0,
+      "minimum_experience_years": 1.0,
+      "meets_experience": true,
+      "predicted_probability": 0.8128319108118212,
+      "true_label": 0
+    },
+    {
+      "application_id": "A0269",
+      "error_type": "false_positive",
+      "job_title": "Data Analytics Intern",
+      "required_overlap_ratio": 0.6666666666666666,
+      "required_skills_total": 3,
+      "missing_required_skills": [
+        "sql"
+      ],
+      "experience_years": 0.75,
+      "minimum_experience_years": 0.0,
+      "meets_experience": true,
+      "predicted_probability": 0.7747821247480128,
+      "true_label": 0
+    },
+    {
+      "application_id": "A0028",
+      "error_type": "false_positive",
+      "job_title": "Python Backend Intern",
+      "required_overlap_ratio": 0.6666666666666666,
+      "required_skills_total": 3,
+      "missing_required_skills": [
+        "fastapi"
+      ],
+      "experience_years": 3.0,
+      "minimum_experience_years": 0.5,
+      "meets_experience": true,
+      "predicted_probability": 0.7677756342866685,
+      "true_label": 0
+    },
+    {
+      "application_id": "A0105",
+      "error_type": "false_positive",
+      "job_title": "Python Backend Intern",
+      "required_overlap_ratio": 0.6666666666666666,
+      "required_skills_total": 3,
+      "missing_required_skills": [
+        "fastapi"
+      ],
+      "experience_years": 3.0,
+      "minimum_experience_years": 0.5,
+      "meets_experience": true,
+      "predicted_probability": 0.7677756342866685,
+      "true_label": 0
+    },
+    {
+      "application_id": "A0207",
+      "error_type": "false_positive",
+      "job_title": "Full Stack Intern",
+      "required_overlap_ratio": 0.75,
+      "required_skills_total": 4,
+      "missing_required_skills": [
+        "sql"
+      ],
+      "experience_years": 1.5,
+      "minimum_experience_years": 0.5,
+      "meets_experience": true,
+      "predicted_probability": 0.7234146302643688,
+      "true_label": 0
+    },
+    {
+      "application_id": "A0237",
+      "error_type": "false_positive",
+      "job_title": "Data Analytics Intern",
+      "required_overlap_ratio": 0.6666666666666666,
+      "required_skills_total": 3,
+      "missing_required_skills": [
+        "pandas"
+      ],
+      "experience_years": 1.5,
+      "minimum_experience_years": 0.0,
+      "meets_experience": true,
+      "predicted_probability": 0.7091155475436701,
+      "true_label": 0
+    },
+    {
+      "application_id": "A0043",
+      "error_type": "false_positive",
+      "job_title": "Node.js Backend Intern",
+      "required_overlap_ratio": 0.6666666666666666,
+      "required_skills_total": 3,
+      "missing_required_skills": [
+        "sql"
+      ],
+      "experience_years": 2.0,
+      "minimum_experience_years": 1.0,
+      "meets_experience": true,
+      "predicted_probability": 0.6474305101664121,
+      "true_label": 0
+    },
+    {
+      "application_id": "A0463",
+      "error_type": "false_positive",
+      "job_title": "React Frontend Intern",
+      "required_overlap_ratio": 0.75,
+      "required_skills_total": 4,
+      "missing_required_skills": [
+        "javascript"
+      ],
+      "experience_years": 0.0,
+      "minimum_experience_years": 0.5,
+      "meets_experience": false,
+      "predicted_probability": 0.6287201013413197,
+      "true_label": 0
+    },
+    {
+      "application_id": "A0101",
+      "error_type": "false_positive",
+      "job_title": "Full Stack Intern",
+      "required_overlap_ratio": 0.5,
+      "required_skills_total": 4,
+      "missing_required_skills": [
+        "javascript",
+        "nodejs"
+      ],
+      "experience_years": 3.0,
+      "minimum_experience_years": 0.5,
+      "meets_experience": true,
+      "predicted_probability": 0.5906691862125288,
+      "true_label": 0
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "model_name": "random_forest",
   "model_version": "a71a100e917f",
-  "trained_at": "2026-11-03T11:46:48.817792+00:00",
+  "trained_at": "2026-11-05T06:01:04.828388+00:00",
   "decision_threshold": 0.5,
   "dataset": {
     "train_applications": 400,

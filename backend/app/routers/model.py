@@ -50,6 +50,15 @@ def portal_stats(db: DbSession) -> PortalStats:
     return PortalStats(jobs=active_count(Job), candidates=active_count(Candidate), applications=active_count(Application))
 
 
+@router.get("/model/errors")
+def model_errors(_user: CurrentUser) -> dict:
+    """Every test-set mistake, as written by scripts/train.py. It holds no names or emails."""
+    path = get_settings().error_analysis_path
+    if not path.exists():
+        raise AppError(404, "ERROR_ANALYSIS_UNAVAILABLE", "No error analysis found. Run: python -m scripts.train")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 @router.get("/model/metrics")
 def model_metrics(_user: CurrentUser) -> dict:
     """Return the evaluation written by scripts/train.py, exactly as it was saved."""

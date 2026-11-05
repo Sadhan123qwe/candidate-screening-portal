@@ -27,6 +27,7 @@ class Settings(BaseSettings):
 
     artifact_path: Path = BACKEND_DIR / "artifacts" / "model.joblib"
     metrics_path: Path = BACKEND_DIR / "artifacts" / "metrics.json"
+    error_analysis_path: Path = BACKEND_DIR / "artifacts" / "error_analysis.json"
     data_dir: Path = BACKEND_DIR / "data"
 
     @property
