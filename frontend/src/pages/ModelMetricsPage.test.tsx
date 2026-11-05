@@ -111,13 +111,15 @@ describe("ModelMetricsPage", () => {
   });
 
   it("builds the plain-language notes from the metrics", async () => {
-    const model = result({ f1: 0.8, confusion_matrix: { tp: 28, fn: 2, fp: 10, tn: 60 } });
+    const model = result({ precision: 0.737, recall: 0.933, f1: 0.8, confusion_matrix: { tp: 28, fn: 2, fp: 10, tn: 60 } });
     const baseline = result({ f1: 0.79, confusion_matrix: { tp: 28, fn: 2, fp: 11, tn: 59 } });
     mockFetch(() => jsonResponse(makeMetrics({ baseline, model })));
     renderWithProviders(<ModelMetricsPage />);
 
     expect(await screen.findByText(/The model wins by one fewer false alarm\./)).toBeInTheDocument();
     expect(screen.getByText(/Accuracy \(88%\) is not the headline/)).toHaveTextContent("would still score 70%.");
+    expect(screen.getByText(/Recall \(0\.933\) is higher than precision \(0\.737\)/)).toHaveTextContent("chosen on F1, not tuned for recall");
+    expect(screen.queryByText(/Recall is favoured/)).not.toBeInTheDocument();
     expect(screen.getByText("Small synthetic data. Not validated for real hiring.")).toBeInTheDocument();
   });
 
@@ -128,6 +130,7 @@ describe("ModelMetricsPage", () => {
     renderWithProviders(<ModelMetricsPage />);
 
     expect(await screen.findByText(/The model doesn't beat the rule on this test set\./)).toBeInTheDocument();
+    expect(screen.queryByText(/higher than precision \(0\.500\)/)).toBeInTheDocument();
     expect(screen.queryByText(/The model wins/)).not.toBeInTheDocument();
   });
 

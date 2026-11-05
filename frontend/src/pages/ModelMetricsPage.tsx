@@ -40,6 +40,14 @@ function comparisonSentence(baseline: ClassificationResult, model: Classificatio
   return "The model doesn't beat the rule on this test set.";
 }
 
+/** States how recall and precision compare, and doesn't claim the model was tuned for either. */
+function recallSentence({ precision, recall }: ClassificationResult): string {
+  if (recall >= precision) {
+    return `Recall (${score(recall)}) is higher than precision (${score(precision)}), which suits screening: a missed candidate costs more than a quick extra look. The model was chosen on F1, not tuned for recall.`;
+  }
+  return `Precision (${score(precision)}) is higher than recall (${score(recall)}), so this model misses more matches than a screening tool ideally should. It was chosen on F1.`;
+}
+
 export function ModelMetricsPage() {
   const metrics = useModelMetrics();
   return <QueryBoundary query={metrics}>{(data) => <MetricsContent metrics={data} />}</QueryBoundary>;
@@ -104,7 +112,7 @@ function MetricsContent({ metrics }: { metrics: ModelMetrics }) {
             <h2 className="card-title">What to know</h2>
             <div className="what-to-know">
               <p>The labels mostly follow required-skill coverage, so a simple rule is already strong. {comparisonSentence(baseline, model)}</p>
-              <p>Recall is favoured: a missed candidate costs more than a quick extra look.</p>
+              <p>{recallSentence(model)}</p>
               <p>
                 Accuracy ({formatPercent((tp + tn) / total)}) is not the headline: saying "Needs Review" to everyone would still score{" "}
                 {formatPercent(notMatches / total)}.
