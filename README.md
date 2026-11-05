@@ -1,5 +1,8 @@
 # Candidate Screening & Application Management Portal
 
+<!-- Replace OWNER/REPO with the GitHub path once this repository has a remote. -->
+[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
+
 A recruiter portal for managing jobs, candidates and applications, with an integrated ML model that suggests which
 applications look like a potential match. Built as a take-home assignment for Rock One Solutions.
 
