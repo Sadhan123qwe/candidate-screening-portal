@@ -768,6 +768,28 @@
   .what-to-know > * + * {
     margin-top: 9px;
   }
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 18px;
+  }
+  .charts-placeholder {
+    height: 420px;
+    margin-top: 18px;
+  }
+  .chart-box {
+    height: 300px;
+    margin-top: 12px;
+  }
+  .chart-tooltip {
+    padding: 8px 10px;
+    background: #161b2e;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-ctl);
+    font-size: 12.5px;
+    line-height: 18px;
+  }
   .more-detail {
     margin-top: 18px;
   }
@@ -1084,7 +1106,8 @@
   }
   .glass.filter-bar,
   .metric-grid,
-  .model-grid {
+  .model-grid,
+  .charts-grid {
     grid-template-columns: minmax(0, 1fr);
   }
   .detail-grid {

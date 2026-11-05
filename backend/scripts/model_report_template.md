@@ -59,6 +59,8 @@ Logistic Regression searched `C`, and Random Forest searched `n_estimators` and 
 
 {{derived.cv_table}}
 
+Scores are the mean ± standard deviation across the grouped folds.
+
 ## Why this model
 
 {{derived.selection}} A fully grown forest (`min_samples_leaf=1`) scored only {{derived.fully_grown_low|.3f}} to
@@ -81,6 +83,18 @@ deterministic and gives the same numbers. No choice was revisited after seeing t
 {{derived.comparison}}
 
 {{derived.test_versus_cv}}
+
+The test set's average precision is {{precision_recall_curve.average_precision|.3f}}. The curve itself is in
+`metrics.json` and on the Model page, and it comes from the same single final evaluation.
+
+## Feature importance
+
+{{feature_importance.method}}. Test data isn't involved.
+
+{{derived.importance_table}}
+
+Features that carry the same information can stand in for each other when one is shuffled, which understates both. Skill
+coverage is measured several ways here, so these figures show which signals matter rather than an exact ranking.
 
 ## Error analysis
 

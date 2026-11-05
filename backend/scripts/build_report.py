@@ -122,15 +122,30 @@ def params_text(params: dict) -> str:
     return ", ".join(f"`{key}={value}`" for key, value in params.items())
 
 
+def mean_std(score: dict) -> str:
+    return f"{score['mean']:.3f} ± {score['std']:.3f}"
+
+
 def cv_table(metrics: dict) -> str:
-    rows = ["| Model | Best parameters | Mean CV F1 | Std across folds |", "|---|---|---|---|"]
+    rows = ["| Model | Best parameters | F1 | Precision | Recall |", "|---|---|---|---|---|"]
     results = metrics["cross_validation"]["results"]
+    summary = metrics["cross_validation"]["best_model_summary"]
     for name in sorted(results, key=lambda key: -metrics["cross_validation"]["best_by_model"][key]):
         best = max(results[name], key=lambda result: result["mean_f1"])
-        mean = f"{best['mean_f1']:.3f}"
+        f1 = mean_std(summary[name]["f1"])
         if name == metrics["model_name"]:
-            mean = f"**{mean}**"
-        rows.append(f"| {title(name)} | {params_text(best['params'])} | {mean} | {best['std_f1']:.3f} |")
+            f1 = f"**{f1}**"
+        rows.append(
+            f"| {title(name)} | {params_text(best['params'])} | {f1} | "
+            f"{mean_std(summary[name]['precision'])} | {mean_std(summary[name]['recall'])} |"
+        )
+    return "\n".join(rows)
+
+
+def importance_table(metrics: dict) -> str:
+    rows = ["| Feature | Drop in F1 when shuffled |", "|---|---|"]
+    for item in metrics["feature_importance"]["features"]:
+        rows.append(f"| `{item['feature']}` | {mean_std(item)} |")
     return "\n".join(rows)
 
 
@@ -253,6 +268,7 @@ def build_context(metrics: dict, error_analysis: dict) -> dict:
             "fully_grown_low": min(fully_grown),
             "fully_grown_high": max(fully_grown),
             "cv_table": cv_table(metrics),
+            "importance_table": importance_table(metrics),
             "results_table": results_table(metrics),
             "confusion_table": confusion_table(metrics),
             "total_applications": dataset["train_applications"] + dataset["test_applications"],

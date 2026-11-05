@@ -57,10 +57,12 @@ scores 0.713. No test labels were used.
 **Models:** both were tuned with `StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42), grouped by candidate_id`, on training data only, with `class_weight="balanced"`.
 Logistic Regression searched `C`, and Random Forest searched `n_estimators` and `min_samples_leaf`.
 
-| Model | Best parameters | Mean CV F1 | Std across folds |
-|---|---|---|---|
-| Random Forest | `min_samples_leaf=5`, `n_estimators=300` | **0.726** | 0.026 |
-| Logistic Regression | `C=0.1` | 0.723 | 0.025 |
+| Model | Best parameters | F1 | Precision | Recall |
+|---|---|---|---|---|
+| Random Forest | `min_samples_leaf=5`, `n_estimators=300` | **0.726 ± 0.026** | 0.649 ± 0.057 | 0.833 ± 0.051 |
+| Logistic Regression | `C=0.1` | 0.723 ± 0.025 | 0.639 ± 0.055 | 0.843 ± 0.070 |
+
+Scores are the mean ± standard deviation across the grouped folds.
 
 ## Why this model
 
@@ -90,6 +92,30 @@ deterministic and gives the same numbers. No choice was revisited after seeing t
 Both approaches find 28 of the 30 true matches. The model has one fewer false positive.
 
 The test F1 (0.82) is higher than the CV F1 (0.73). That is most likely luck from a small test set with only 30 positives, so 0.73 is the more cautious estimate of what to expect.
+
+The test set's average precision is 0.913. The curve itself is in
+`metrics.json` and on the Model page, and it comes from the same single final evaluation.
+
+## Feature importance
+
+Permutation importance on held-out folds of StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42), grouped by candidate_id, 10 repeats. Test data isn't involved.
+
+| Feature | Drop in F1 when shuffled |
+|---|---|
+| `required_overlap_ratio` | 0.080 ± 0.058 |
+| `required_missing_count` | 0.021 ± 0.034 |
+| `skill_jaccard` | 0.010 ± 0.030 |
+| `experience_years` | 0.009 ± 0.023 |
+| `experience_gap` | 0.009 ± 0.013 |
+| `meets_experience` | 0.006 ± 0.013 |
+| `has_all_required` | 0.002 ± 0.004 |
+| `min_experience_years` | 0.000 ± 0.001 |
+| `preferred_overlap_ratio` | -0.001 ± 0.014 |
+| `extra_skill_count` | -0.008 ± 0.006 |
+| `candidate_skill_count` | -0.008 ± 0.014 |
+
+Features that carry the same information can stand in for each other when one is shuffled, which understates both. Skill
+coverage is measured several ways here, so these figures show which signals matter rather than an exact ranking.
 
 ## Error analysis
 

@@ -1,9 +1,13 @@
+import { lazy, Suspense } from "react";
 import { useModelMetrics } from "../api/model";
 import type { ClassificationResult, ModelMetrics } from "../api/types";
 import { QueryBoundary } from "../components/QueryBoundary";
 import { GlassCard } from "../components/ui/GlassCard";
 import { PageHeader } from "../components/ui/PageHeader";
-import { formatDate, formatDateTime, formatPercent } from "../lib/format";
+import { formatDate, formatDateTime, formatFeatureName, formatPercent } from "../lib/format";
+
+// The chart library is large, so only this page pays for it, and only when it's opened.
+const ModelCharts = lazy(() => import("../components/ModelCharts"));
 
 const titleCase = (name: string) => name.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 const score = (value: number) => value.toFixed(3);
@@ -111,6 +115,12 @@ function MetricsContent({ metrics }: { metrics: ModelMetrics }) {
         </div>
       </div>
 
+      <Suspense fallback={<div className="charts-placeholder" />}>
+        <ModelCharts metrics={metrics} />
+      </Suspense>
+
+      <CrossValidation metrics={metrics} />
+
       <MoreDetail metrics={metrics} />
     </div>
   );
@@ -201,6 +211,43 @@ function ConfusionMatrix({ result }: { result: ClassificationResult }) {
   );
 }
 
+function meanStd({ mean, std }: { mean: number; std: number }): string {
+  return `${score(mean)} \u00B1 ${score(std)}`;
+}
+
+function CrossValidation({ metrics }: { metrics: ModelMetrics }) {
+  const summary = metrics.cross_validation.best_model_summary;
+  return (
+    <GlassCard as="section" padding="none" aria-label="Cross-validation" className="mt-[18px] overflow-hidden">
+      <div className="table-scroll">
+        <table className="data-table min-w-[620px]">
+          <thead>
+            <tr>
+              <th scope="col">Cross-validation</th>
+              <th scope="col">F1</th>
+              <th scope="col">Precision</th>
+              <th scope="col">Recall</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(summary).map(([name, scores]) => (
+              <tr key={name}>
+                <td>
+                  <span className="cell-title">{titleCase(name)}</span>
+                  <span className="cell-sub">{name === metrics.model_name ? "Chosen, on training data only" : "Compared, on training data only"}</span>
+                </td>
+                <td className="num whitespace-nowrap">{meanStd(scores.f1)}</td>
+                <td className="num whitespace-nowrap">{meanStd(scores.precision)}</td>
+                <td className="num whitespace-nowrap">{meanStd(scores.recall)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </GlassCard>
+  );
+}
+
 /** Everything the page showed before the redesign, kept one click away. */
 function MoreDetail({ metrics }: { metrics: ModelMetrics }) {
   return (
@@ -237,6 +284,25 @@ function MoreDetail({ metrics }: { metrics: ModelMetrics }) {
                   );
                 }),
               )}
+            </tbody>
+          </table>
+        </div>
+        <div className="table-scroll">
+          <table className="data-table min-w-[420px]">
+            <caption className="sr-only">Feature importance, as a table</caption>
+            <thead>
+              <tr>
+                <th scope="col">Feature</th>
+                <th scope="col">Drop in F1 when shuffled</th>
+              </tr>
+            </thead>
+            <tbody>
+              {metrics.feature_importance.features.map((item) => (
+                <tr key={item.feature}>
+                  <td>{formatFeatureName(item.feature)}</td>
+                  <td className="num">{meanStd(item)}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

@@ -158,6 +158,17 @@ export interface CvResult {
   std_f1: number;
 }
 
+export interface MeanStd {
+  mean: number;
+  std: number;
+}
+
+export interface PrecisionRecallPoint {
+  threshold: number | null;
+  precision: number;
+  recall: number;
+}
+
 export interface ModelMetrics {
   model_name: string;
   model_version: string;
@@ -179,7 +190,14 @@ export interface ModelMetrics {
     scoring: string;
     best_by_model: Record<string, number>;
     results: Record<string, CvResult[]>;
+    best_model_summary: Record<string, { f1: MeanStd; precision: MeanStd; recall: MeanStd }>;
+  };
+  feature_importance: {
+    method: string;
+    scoring: string;
+    features: ({ feature: string } & MeanStd)[];
   };
   chosen_model: { name: string; params: Record<string, number>; mean_cv_f1: number };
   test: { baseline: ClassificationResult; model: ClassificationResult };
+  precision_recall_curve: { average_precision: number; points: PrecisionRecallPoint[] };
 }

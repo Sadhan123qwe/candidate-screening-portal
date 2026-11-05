@@ -36,9 +36,32 @@ function makeMetrics(test: ModelMetrics["test"]): ModelMetrics {
       scoring: "f1",
       best_by_model: {},
       results: { logistic_regression: [{ params: { C: 1 }, mean_f1: 0.7, std_f1: 0.02 }] },
+      best_model_summary: {
+        logistic_regression: {
+          f1: { mean: 0.712, std: 0.021 },
+          precision: { mean: 0.633, std: 0.044 },
+          recall: { mean: 0.845, std: 0.055 },
+        },
+      },
+    },
+    feature_importance: {
+      method: "Permutation importance",
+      scoring: "Drop in F1",
+      features: [
+        { feature: "required_overlap_ratio", mean: 0.211, std: 0.031 },
+        { feature: "extra_skill_count", mean: -0.004, std: 0.008 },
+      ],
     },
     chosen_model: { name: "logistic_regression", params: { C: 1 }, mean_cv_f1: 0.7 },
     test,
+    precision_recall_curve: {
+      average_precision: 0.777,
+      points: [
+        { threshold: 0.2, precision: 0.5, recall: 1 },
+        { threshold: 0.5, precision: 0.8, recall: 0.5 },
+        { threshold: null, precision: 1, recall: 0 },
+      ],
+    },
   };
 }
 
@@ -96,6 +119,28 @@ describe("ModelMetricsPage", () => {
 
     expect(await screen.findByText("Cross-validation and training data")).toBeInTheDocument();
     expect(screen.getByText("C=1")).toBeInTheDocument();
+  });
+
+  it("shows cross-validation as mean and standard deviation", async () => {
+    mockFetch(() => jsonResponse(makeMetrics({ baseline: result(), model: result() })));
+    renderWithProviders(<ModelMetricsPage />);
+
+    const row = await screen.findByRole("region", { name: "Cross-validation" });
+    expect(row).toHaveTextContent("0.712 \u00B1 0.021");
+    expect(row).toHaveTextContent("0.633 \u00B1 0.044");
+    expect(row).toHaveTextContent("0.845 \u00B1 0.055");
+  });
+
+  it("describes both charts, and gives importance plain labels and a table", async () => {
+    mockFetch(() => jsonResponse(makeMetrics({ baseline: result({ precision: 0.8, recall: 0.5 }), model: result({ precision: 0.8, recall: 0.5 }) })));
+    renderWithProviders(<ModelMetricsPage />);
+
+    const curve = await screen.findByRole("img", { name: /Precision-recall curve/ });
+    expect(curve).toHaveAccessibleName(expect.stringContaining("threshold 0.5"));
+    expect(screen.getByText(/Average precision/)).toHaveTextContent("0.777");
+    expect(screen.getByRole("img", { name: /Feature importance/ })).toBeInTheDocument();
+    expect(screen.getByText("Required skills matched")).toBeInTheDocument();
+    expect(screen.getByText("0.211 \u00B1 0.031")).toHaveClass("num");
   });
 
   it("shows an error with a retry when metrics are missing", async () => {

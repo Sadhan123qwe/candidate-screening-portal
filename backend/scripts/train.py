@@ -18,10 +18,18 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 import sklearn  # noqa: E402
+from sklearn.base import clone  # noqa: E402
 from sklearn.ensemble import RandomForestClassifier  # noqa: E402
+from sklearn.inspection import permutation_importance  # noqa: E402
 from sklearn.linear_model import LogisticRegression  # noqa: E402
-from sklearn.metrics import confusion_matrix, f1_score, precision_recall_fscore_support  # noqa: E402
-from sklearn.model_selection import GridSearchCV, StratifiedGroupKFold  # noqa: E402
+from sklearn.metrics import (  # noqa: E402
+    average_precision_score,
+    confusion_matrix,
+    f1_score,
+    precision_recall_curve,
+    precision_recall_fscore_support,
+)
+from sklearn.model_selection import GridSearchCV, StratifiedGroupKFold, cross_validate  # noqa: E402
 from sklearn.pipeline import Pipeline  # noqa: E402
 from sklearn.preprocessing import StandardScaler  # noqa: E402
 
@@ -36,6 +44,8 @@ RANDOM_STATE = 42
 DECISION_THRESHOLD = 0.5
 EXPECTED_TRAIN_ROWS = 400
 EXPECTED_TEST_ROWS = 100
+PERMUTATION_REPEATS = 10
+CV_DESCRIPTION = "StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42), grouped by candidate_id"
 
 # Columns that may never become model inputs. tests/test_training_guard.py checks this.
 FORBIDDEN_FEATURES = {
@@ -110,11 +120,15 @@ def choose_baseline_threshold(ratios: pd.Series, labels: pd.Series) -> dict:
     return {"threshold": best["threshold"], "train_f1": best["f1"], "all_thresholds": scores}
 
 
-def tune_candidate_models(X: pd.DataFrame, y: pd.Series, groups: pd.Series) -> dict[str, GridSearchCV]:
-    """Run grouped cross-validation for both model families on training data."""
+def make_cv() -> StratifiedGroupKFold:
     # Grouping by candidate stops one person's two applications from sitting on
     # both sides of a fold, which would flatter the CV score.
-    cv = StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
+    return StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
+
+
+def tune_candidate_models(X: pd.DataFrame, y: pd.Series, groups: pd.Series) -> dict[str, GridSearchCV]:
+    """Run grouped cross-validation for both model families on training data."""
+    cv = make_cv()
 
     searches = {
         "logistic_regression": GridSearchCV(
@@ -158,6 +172,62 @@ def summarize_cv(search: GridSearchCV) -> list[dict]:
         }
         for params, mean, std in zip(results["params"], results["mean_test_score"], results["std_test_score"])
     ]
+
+
+def summarize_best_models(searches: dict[str, GridSearchCV], X: pd.DataFrame, y: pd.Series, groups: pd.Series) -> dict:
+    """F1, precision and recall as mean and std across grouped folds, for each model compared."""
+    summary = {}
+    for name, search in searches.items():
+        scores = cross_validate(
+            clone(search.best_estimator_), X, y, groups=groups, cv=make_cv(), scoring=("f1", "precision", "recall")
+        )
+        summary[name] = {
+            metric: {"mean": float(scores[f"test_{metric}"].mean()), "std": float(scores[f"test_{metric}"].std())}
+            for metric in ("f1", "precision", "recall")
+        }
+    return summary
+
+
+def grouped_permutation_importance(estimator: Pipeline, X: pd.DataFrame, y: pd.Series, groups: pd.Series) -> dict:
+    """How much F1 drops when one feature is shuffled, measured on held-out training folds.
+
+    Each fold's model is fitted without its held-out candidates, so this describes
+    generalisation rather than memorisation. The test set is not involved.
+    """
+    fold_importances = []
+    for fit_rows, held_out_rows in make_cv().split(X, y, groups):
+        fitted = clone(estimator).fit(X.iloc[fit_rows], y.iloc[fit_rows])
+        result = permutation_importance(
+            fitted,
+            X.iloc[held_out_rows],
+            y.iloc[held_out_rows],
+            scoring="f1",
+            n_repeats=PERMUTATION_REPEATS,
+            random_state=RANDOM_STATE,
+        )
+        fold_importances.append(result.importances_mean)
+    importances = np.array(fold_importances)
+    features = [
+        {"feature": name, "mean": float(importances[:, index].mean()), "std": float(importances[:, index].std())}
+        for index, name in enumerate(FEATURE_NAMES)
+    ]
+    features.sort(key=lambda item: -item["mean"])
+    return {
+        "method": f"Permutation importance on held-out folds of {CV_DESCRIPTION}, {PERMUTATION_REPEATS} repeats",
+        "scoring": "Drop in F1 for class 1",
+        "features": features,
+    }
+
+
+def build_precision_recall_curve(y_true: pd.Series, probabilities: np.ndarray) -> dict:
+    """Part of the single final evaluation. Nothing in training reads it."""
+    precision, recall, thresholds = precision_recall_curve(y_true, probabilities)
+    points = [
+        # The curve's last point is a fixed end point, with no threshold of its own.
+        {"threshold": float(thresholds[i]) if i < len(thresholds) else None, "precision": float(precision[i]), "recall": float(recall[i])}
+        for i in range(len(precision))
+    ]
+    return {"average_precision": float(average_precision_score(y_true, probabilities)), "points": points}
 
 
 def classification_summary(y_true: pd.Series, y_pred: np.ndarray) -> dict:
@@ -276,6 +346,8 @@ def train() -> dict:
     pipeline = chosen.best_estimator_
     chosen_params = {key.replace("model__", ""): value for key, value in chosen.best_params_.items()}
     has_all_required = X_train["has_all_required"] == 1
+    best_model_summary = summarize_best_models(searches, X_train, y_train, groups_train)
+    feature_importance = grouped_permutation_importance(pipeline, X_train, y_train, groups_train)
 
     # --- The approach is final. The test set is used once, below. ---
     test_probabilities = pipeline.predict_proba(X_test)[:, 1]
@@ -283,6 +355,7 @@ def train() -> dict:
     baseline_predictions = (X_test["required_overlap_ratio"] >= baseline["threshold"]).astype(int).to_numpy()
     model_metrics = classification_summary(y_test, model_predictions)
     baseline_metrics = classification_summary(y_test, baseline_predictions)
+    pr_curve = build_precision_recall_curve(y_test, test_probabilities)
     error_analysis = build_error_analysis(dataset[~is_train], X_test, test_probabilities, DECISION_THRESHOLD)
 
     model_version = build_model_version(chosen_params, chosen_name)
@@ -311,13 +384,16 @@ def train() -> dict:
             "train_thresholds": baseline["all_thresholds"],
         },
         "cross_validation": {
-            "method": "StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42), grouped by candidate_id",
+            "method": CV_DESCRIPTION,
             "scoring": "F1 for class 1",
             "best_by_model": {name: float(search.best_score_) for name, search in searches.items()},
             "results": {name: summarize_cv(search) for name, search in searches.items()},
+            "best_model_summary": best_model_summary,
         },
+        "feature_importance": feature_importance,
         "chosen_model": {"name": chosen_name, "params": chosen_params, "mean_cv_f1": float(chosen.best_score_)},
         "test": {"baseline": baseline_metrics, "model": model_metrics},
+        "precision_recall_curve": pr_curve,
         "logistic_coefficients": logistic_coefficients(pipeline),
     }
 
