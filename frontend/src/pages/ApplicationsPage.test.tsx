@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { Application, ApplicationPage } from "../api/types";
 import { jsonResponse, mockFetch, renderWithProviders, type MockHandler } from "../test/helpers";
 import { ApplicationsPage } from "./ApplicationsPage";
@@ -130,6 +130,54 @@ describe("ApplicationsPage", () => {
     expect(request.searchParams.get("page")).toBe("2");
     expect(screen.getByRole("combobox", { name: "Filter by prediction" })).toHaveValue("Needs Review");
     expect(screen.getByRole("combobox", { name: "Filter by status" })).toHaveValue("Shortlisted");
+  });
+
+  it("reads the sort from the URL and sends it to the API, leaving it out by default", async () => {
+    const fetchMock = mockApi(() => jsonResponse(pageOf([makeApplication()])));
+    renderWithProviders(<ApplicationsPage />, "/?sort=probability_desc");
+    await screen.findByRole("link", { name: "Ada Candidate" });
+
+    const listRequests = () => fetchMock.mock.calls.map(([input]) => new URL(String(input))).filter((url) => url.pathname === "/api/applications");
+    expect(listRequests()[0].searchParams.get("sort")).toBe("probability_desc");
+    expect(screen.getByRole("combobox", { name: "Sort applications" })).toHaveValue("probability_desc");
+
+    await userEvent.setup().selectOptions(screen.getByRole("combobox", { name: "Sort applications" }), "date_desc");
+
+    await waitFor(() => expect(listRequests().slice(-1)[0].searchParams.has("sort")).toBe(false));
+  });
+
+  it("exports the current filters and sort, without the page", async () => {
+    const createObjectURL = vi.fn(() => "blob:test");
+    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }));
+    // jsdom can't follow a download link, so this only checks that the click happens.
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const fetchMock = mockApi((url) =>
+      url.pathname === "/api/applications/export" ? new Response("a,b\n1,2\n", { status: 200 }) : jsonResponse(pageOf([makeApplication()])),
+    );
+    renderWithProviders(<ApplicationsPage />, "/?status=Rejected&search=ada&sort=date_asc&page=3");
+    await screen.findByRole("link", { name: "Ada Candidate" });
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "Export CSV" }));
+
+    await waitFor(() => expect(click).toHaveBeenCalledTimes(1));
+    click.mockRestore();
+    const request = fetchMock.mock.calls.map(([input]) => new URL(String(input))).find((url) => url.pathname === "/api/applications/export")!;
+    expect(Object.fromEntries(request.searchParams)).toEqual({ status: "Rejected", search: "ada", sort: "date_asc" });
+  });
+
+  it("shows why an export failed", async () => {
+    mockApi((url) =>
+      url.pathname === "/api/applications/export"
+        ? jsonResponse({ detail: "Export failed.", code: "INTERNAL_ERROR" }, 500)
+        : jsonResponse(pageOf([makeApplication()])),
+    );
+    renderWithProviders(<ApplicationsPage />);
+    await screen.findByRole("link", { name: "Ada Candidate" });
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "Export CSV" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Export failed.");
+    expect(screen.getByRole("button", { name: "Export CSV" })).toBeEnabled();
   });
 
   it("shows status counts on the chips, and filters when one is clicked", async () => {

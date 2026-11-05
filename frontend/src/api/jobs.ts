@@ -1,9 +1,13 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "./client";
-import type { Job, JobInput } from "./types";
+import type { Job, JobInput, JobSummary } from "./types";
 
 export function useJobs() {
   return useQuery({ queryKey: ["jobs"], queryFn: () => apiRequest<Job[]>("/api/jobs") });
+}
+
+export function useJobSummaries() {
+  return useQuery({ queryKey: ["jobs", "summary"], queryFn: () => apiRequest<JobSummary[]>("/api/jobs/summary") });
 }
 
 export function useJob(id: number) {

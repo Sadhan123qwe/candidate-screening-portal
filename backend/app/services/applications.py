@@ -1,5 +1,7 @@
 """Business logic for applications: create, change status, soft delete."""
 
+from enum import StrEnum
+
 from sqlalchemy import Select, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -20,6 +22,13 @@ from app.models import (
 from app.services.audit import record_audit, snapshot_application
 from app.services.common import assert_version, flush_checking_version, get_active
 from app.services.predictions import refresh_predictions
+
+
+class ApplicationSort(StrEnum):
+    DATE_DESC = "date_desc"
+    DATE_ASC = "date_asc"
+    PROBABILITY_DESC = "probability_desc"
+    PROBABILITY_ASC = "probability_asc"
 
 
 def _matching_applications(job_id: int | None, search: str | None, prediction: PredictionLabel | None) -> Select:
@@ -46,6 +55,28 @@ def _matching_applications(job_id: int | None, search: str | None, prediction: P
     return query
 
 
+def _filtered_applications(
+    job_id: int | None, status: ApplicationStatus | None, search: str | None, prediction: PredictionLabel | None
+) -> Select:
+    query = _matching_applications(job_id, search, prediction)
+    if status is not None:
+        query = query.where(Application.status == status.value)
+    return query
+
+
+def _sorted_by(query: Select, sort: ApplicationSort) -> Select:
+    # The id tie-break keeps page contents stable when rows share a value.
+    if sort == ApplicationSort.DATE_ASC:
+        return query.order_by(Application.created_at.asc(), Application.id.asc())
+    if sort == ApplicationSort.DATE_DESC:
+        return query.order_by(Application.created_at.desc(), Application.id.desc())
+    probability = Prediction.probability.desc() if sort == ApplicationSort.PROBABILITY_DESC else Prediction.probability.asc()
+    # An application with no prediction goes last either way, since it has no score to rank.
+    return query.outerjoin(Application.prediction).order_by(
+        probability.nulls_last(), Application.created_at.desc(), Application.id.desc()
+    )
+
+
 def list_applications(
     db: Session,
     job_id: int | None,
@@ -54,20 +85,25 @@ def list_applications(
     page: int,
     page_size: int,
     prediction: PredictionLabel | None = None,
+    sort: ApplicationSort = ApplicationSort.DATE_DESC,
 ) -> tuple[list[Application], int]:
     """Return one page of active applications and the total number that match."""
-    query = _matching_applications(job_id, search, prediction)
-    if status is not None:
-        query = query.where(Application.status == status.value)
-
+    query = _filtered_applications(job_id, status, search, prediction)
     total = db.scalar(select(func.count()).select_from(query.subquery()))
-    # The id tie-break keeps page contents stable when rows share a created_at.
-    items = db.scalars(
-        query.order_by(Application.created_at.desc(), Application.id.desc())
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-    ).all()
+    items = db.scalars(_sorted_by(query, sort).offset((page - 1) * page_size).limit(page_size)).all()
     return list(items), total
+
+
+def all_matching_applications(
+    db: Session,
+    job_id: int | None,
+    status: ApplicationStatus | None,
+    search: str | None,
+    prediction: PredictionLabel | None,
+    sort: ApplicationSort,
+) -> list[Application]:
+    """The whole filtered list, with no paging, for exporting."""
+    return list(db.scalars(_sorted_by(_filtered_applications(job_id, status, search, prediction), sort)))
 
 
 def count_by_status(

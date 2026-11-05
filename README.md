@@ -191,10 +191,12 @@ Every route except login, health and stats needs a `Authorization: Bearer <token
 | `GET /api/health` | Database reachable, model loaded, model version |
 | `GET /api/stats` | Active job, candidate and application totals, shown on the login page |
 | `GET, POST /api/jobs` | List or create jobs |
+| `GET /api/jobs/summary` | Applied, Shortlisted, Rejected and Potential Match counts for each job |
 | `GET, PATCH, DELETE /api/jobs/{id}` | Read (with counts by status), update or soft-delete a job |
 | `GET, POST /api/candidates` | List (`?search=` on name, email or skill) or create candidates |
 | `GET, PATCH, DELETE /api/candidates/{id}` | Read (with applications), update or soft-delete a candidate |
-| `GET, POST /api/applications` | Paginated list (`job_id`, `status`, `prediction`, `search`, `page`, `page_size`) or create. A duplicate returns 409 |
+| `GET, POST /api/applications` | Paginated list (`job_id`, `status`, `prediction`, `search`, `sort`, `page`, `page_size`) or create. A duplicate returns 409 |
+| `GET /api/applications/export` | The whole filtered list as a CSV download. It takes the same filters and `sort`, with no paging |
 | `GET /api/applications/summary` | Counts per status, for the same `job_id`, `prediction` and `search` filters as the list |
 | `GET, DELETE /api/applications/{id}` | Read (with prediction and top features) or soft-delete |
 | `PATCH /api/applications/{id}/status` | Change status. Requires `version` |

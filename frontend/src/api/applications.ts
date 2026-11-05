@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { ApiError, apiRequest, STALE_UPDATE_MESSAGE } from "./client";
+import { ApiError, apiDownload, apiRequest, STALE_UPDATE_MESSAGE } from "./client";
 import type {
   Application,
   ApplicationDetail,
@@ -15,9 +15,17 @@ export interface ApplicationFilters {
   status?: string;
   prediction?: string;
   search?: string;
+  sort?: string;
   page: number;
   page_size: number;
 }
+
+export const APPLICATION_SORTS = [
+  { value: "date_desc", label: "Newest first" },
+  { value: "date_asc", label: "Oldest first" },
+  { value: "probability_desc", label: "Highest match" },
+  { value: "probability_asc", label: "Lowest match" },
+];
 
 export type ApplicationSummaryFilters = Pick<ApplicationFilters, "job_id" | "prediction" | "search">;
 
@@ -35,6 +43,16 @@ export function useApplicationSummary(filters: ApplicationSummaryFilters) {
     queryKey: ["applications", "summary", filters],
     queryFn: () => apiRequest<ApplicationSummary>("/api/applications/summary", { query: { ...filters } }),
     placeholderData: keepPreviousData,
+  });
+}
+
+/** Downloads every row matching the filters, not just the page on screen. */
+export function useExportApplications() {
+  return useMutation({
+    // Not a data change, so it's excluded from the refresh that follows other writes.
+    meta: { skipRefresh: true },
+    mutationFn: (filters: Omit<ApplicationFilters, "page" | "page_size">) =>
+      apiDownload("/api/applications/export", "applications.csv", { ...filters }),
   });
 }
 

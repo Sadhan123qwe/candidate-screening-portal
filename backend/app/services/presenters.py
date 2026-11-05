@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.ml import predictor as predictor_module
-from app.models import Application, Candidate, Job, StatusHistory
+from app.models import Application, Candidate, Job, Prediction, PredictionLabel, StatusHistory
 from app.schemas import (
     ApplicationCounts,
     ApplicationDetail,
@@ -17,6 +17,7 @@ from app.schemas import (
     CandidateOut,
     FeatureContributionOut,
     JobOut,
+    JobSummaryOut,
     PredictionOut,
     StatusHistoryOut,
 )
@@ -146,6 +147,33 @@ def application_counts_by_candidate(db: Session) -> dict[int, int]:
         .group_by(Application.candidate_id)
     ).all()
     return {candidate_id: count for candidate_id, count in rows}
+
+
+def job_summaries(db: Session, jobs: list[Job]) -> list[JobSummaryOut]:
+    """Status and prediction counts for each job, from two grouped queries in total."""
+    counts = application_counts_by_job(db)
+    model_available = predictor_module.get_predictor().available
+    matches = dict(
+        db.execute(
+            select(Application.job_id, func.count())
+            .join(Application.prediction)
+            .where(Application.deleted_at.is_(None), Prediction.label == PredictionLabel.POTENTIAL_MATCH.value)
+            .group_by(Application.job_id)
+        ).all()
+    )
+    summaries = []
+    for job in jobs:
+        job_counts = counts.get(job.id, ApplicationCounts())
+        summaries.append(
+            JobSummaryOut(
+                job_id=job.id,
+                applied=job_counts.Applied,
+                shortlisted=job_counts.Shortlisted,
+                rejected=job_counts.Rejected,
+                potential_match=matches.get(job.id, 0) if model_available else None,
+            )
+        )
+    return summaries
 
 
 def to_job_out(job: Job, counts: ApplicationCounts | None = None) -> JobOut:

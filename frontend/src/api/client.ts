@@ -66,7 +66,7 @@ async function toApiError(response: Response): Promise<ApiError> {
   );
 }
 
-export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+async function send(path: string, options: RequestOptions): Promise<Response> {
   const headers: Record<string, string> = {};
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -91,6 +91,24 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   if (!response.ok) throw await toApiError(response);
+  return response;
+}
+
+export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const response = await send(path, options);
   if (response.status === 204) return undefined as T;
   return response.json();
+}
+
+/** Fetches a file with the login token, which a plain link can't send, and saves it. */
+export async function apiDownload(path: string, filename: string, query?: RequestOptions["query"]): Promise<void> {
+  const response = await send(path, { query });
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }

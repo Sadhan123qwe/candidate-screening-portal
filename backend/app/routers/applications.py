@@ -3,6 +3,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Query
+from fastapi.responses import StreamingResponse
 
 from app.auth import CurrentUser
 from app.db import DbSession
@@ -17,7 +18,9 @@ from app.schemas import (
     StatusUpdate,
 )
 from app.services import applications as application_service
+from app.services.applications import ApplicationSort
 from app.services.common import get_active
+from app.services.export import stream_csv, to_csv_rows
 from app.services.presenters import to_application_detail, to_application_out, to_status_history_out
 
 router = APIRouter(prefix="/api/applications", tags=["applications"])
@@ -33,8 +36,9 @@ def list_applications(
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 25,
     prediction: PredictionLabel | None = None,
+    sort: ApplicationSort = ApplicationSort.DATE_DESC,
 ) -> ApplicationPage:
-    items, total = application_service.list_applications(db, job_id, status, search, page, page_size, prediction)
+    items, total = application_service.list_applications(db, job_id, status, search, page, page_size, prediction, sort)
     return ApplicationPage(
         items=[to_application_out(application) for application in items],
         total=total,
@@ -43,7 +47,25 @@ def list_applications(
     )
 
 
-# Declared before /{application_id}, which would otherwise try to read "summary" as an id.
+# These two are declared before /{application_id}, which would otherwise read their names as ids.
+@router.get("/export")
+def export_applications(
+    db: DbSession,
+    _user: CurrentUser,
+    job_id: int | None = None,
+    status: ApplicationStatus | None = None,
+    search: str | None = None,
+    prediction: PredictionLabel | None = None,
+    sort: ApplicationSort = ApplicationSort.DATE_DESC,
+) -> StreamingResponse:
+    applications = application_service.all_matching_applications(db, job_id, status, search, prediction, sort)
+    return StreamingResponse(
+        stream_csv(to_csv_rows(applications)),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="applications.csv"'},
+    )
+
+
 @router.get("/summary")
 def application_summary(
     db: DbSession,

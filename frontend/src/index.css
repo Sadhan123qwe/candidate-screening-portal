@@ -547,7 +547,7 @@
 
   .glass.filter-bar {
     display: grid;
-    grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 2fr) repeat(4, minmax(0, 1fr));
     gap: 12px;
     padding: 13px 15px;
   }
@@ -651,6 +651,18 @@
   /* ---------- List beside a form ---------- */
   .split-form {
     padding-top: 19px;
+  }
+  .data-table.jobs-table th,
+  .data-table.jobs-table td {
+    padding-right: 7px;
+    padding-left: 7px;
+  }
+  .data-table.jobs-table th {
+    letter-spacing: 0.03em;
+  }
+  .data-table.jobs-table th:first-child,
+  .data-table.jobs-table td:first-child {
+    padding-left: 16px;
   }
   .search-stack > * + * {
     margin-top: 13px;

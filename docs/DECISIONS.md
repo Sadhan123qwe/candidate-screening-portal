@@ -107,6 +107,18 @@ Every non-obvious choice and the reason for it. Newest thinking is grouped by to
 - **The metrics page shows the confusion matrix as a table, not the PNG.** The numbers are readable and accessible, and
   the API doesn't need to serve image files. The PNG stays in `artifacts/` and in the model report.
 
+## Recruiter features
+
+- **Sorting happens on the server.** Sorting in the browser would only reorder the current page. `sort` is optional and
+  defaults to newest first, the existing order. Applications with no prediction go last in both probability directions.
+- **The export protects against spreadsheet formulas.** A cell starting with `=`, `+`, `-` or `@` gets a leading
+  apostrophe, because text typed into the portal would otherwise run as a formula when the file is opened in Excel.
+- **The export reads its rows before streaming.** The database session closes before the response is sent, so the rows
+  are loaded first. That's fine at this size, but a much larger list would need a session held open for the stream.
+- **The export button fetches the file rather than linking to it.** A plain link can't send the login token.
+- **`potential_match` is null when no model is loaded.** Stored labels can't be trusted then, and a zero would look real.
+- **The Jobs table shows minimum experience under the job title.** The four count columns need the width.
+
 ## Decision threshold
 
 - **The threshold is checked on training data, and moved only on clear evidence.** `select_threshold` in

@@ -5,10 +5,10 @@ from fastapi import APIRouter
 from app.auth import CurrentUser
 from app.db import DbSession
 from app.models import Job
-from app.schemas import JobCreate, JobOut, JobUpdate
+from app.schemas import JobCreate, JobOut, JobSummaryOut, JobUpdate
 from app.services import jobs as job_service
 from app.services.common import get_active
-from app.services.presenters import application_counts_by_job, to_job_out
+from app.services.presenters import application_counts_by_job, job_summaries, to_job_out
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
 
@@ -17,6 +17,12 @@ router = APIRouter(prefix="/api/jobs", tags=["jobs"])
 def list_jobs(db: DbSession, _user: CurrentUser) -> list[JobOut]:
     counts = application_counts_by_job(db)
     return [to_job_out(job, counts.get(job.id)) for job in job_service.list_jobs(db)]
+
+
+# Declared before /{job_id}, which would otherwise try to read "summary" as an id.
+@router.get("/summary")
+def jobs_summary(db: DbSession, _user: CurrentUser) -> list[JobSummaryOut]:
+    return job_summaries(db, job_service.list_jobs(db))
 
 
 @router.post("", status_code=201)

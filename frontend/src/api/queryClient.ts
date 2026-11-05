@@ -9,8 +9,8 @@ import { ApiError } from "./client";
 export function createQueryClient(options: { retry?: boolean } = {}): QueryClient {
   const client: QueryClient = new QueryClient({
     mutationCache: new MutationCache({
-      onSuccess: () => {
-        void client.invalidateQueries();
+      onSuccess: (_data, _variables, _context, mutation) => {
+        if (!mutation.meta?.skipRefresh) void client.invalidateQueries();
       },
       onError: (error) => {
         // Someone else changed the record, so the copy on screen is out of date.

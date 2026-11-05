@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { useCreateJob, useJobs } from "../api/jobs";
-import type { Job } from "../api/types";
+import { useCreateJob, useJobs, useJobSummaries } from "../api/jobs";
 import { JobForm } from "../components/JobForm";
 import { QueryBoundary } from "../components/QueryBoundary";
 import { Button } from "../components/ui/Button";
@@ -10,13 +9,11 @@ import { PageHeader } from "../components/ui/PageHeader";
 import { SkillTag } from "../components/ui/SkillTag";
 import { formatYears } from "../lib/format";
 
-function totalApplications(job: Job): number {
-  const { Applied, Shortlisted, Rejected } = job.application_counts;
-  return Applied + Shortlisted + Rejected;
-}
+const NOT_AVAILABLE = "\u2013";
 
 export function JobsPage() {
   const jobs = useJobs();
+  const summaries = useJobSummaries();
   const createJob = useCreateJob();
   const titleRef = useRef<HTMLInputElement>(null);
   // A new key remounts the form, which is the simplest way to clear every field.
@@ -53,24 +50,29 @@ export function JobsPage() {
             {(list) => (
               <GlassCard padding="none" className="overflow-hidden">
                 <div className="table-scroll">
-                  <table className="data-table min-w-[560px]">
+                  <table className="data-table jobs-table min-w-[590px]">
                     <thead>
                       <tr>
                         <th scope="col">Job</th>
                         <th scope="col">Required skills</th>
-                        <th scope="col" className="w-[76px]">
-                          Min exp.
-                        </th>
-                        <th scope="col">Applications</th>
+                        <th scope="col">Applied</th>
+                        <th scope="col">Shortlisted</th>
+                        <th scope="col">Rejected</th>
+                        <th scope="col">Potential match</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {list.map((job) => (
+                      {list.map((job) => {
+                        const summary = summaries.data?.find((item) => item.job_id === job.id);
+                        return (
                         <tr key={job.id}>
                           <td>
                             <Link className="cell-link cell-title" to={`/jobs/${job.id}`}>
                               {job.title}
                             </Link>
+                            <span className="cell-sub whitespace-nowrap">
+                              Min. <span className="num">{formatYears(job.min_experience_years)}</span>
+                            </span>
                           </td>
                           <td>
                             <div className="skill-list">
@@ -79,10 +81,13 @@ export function JobsPage() {
                               ))}
                             </div>
                           </td>
-                          <td className="num whitespace-nowrap">{formatYears(job.min_experience_years)}</td>
-                          <td className="num">{totalApplications(job)}</td>
+                          <td className="num">{summary?.applied ?? NOT_AVAILABLE}</td>
+                          <td className="num">{summary?.shortlisted ?? NOT_AVAILABLE}</td>
+                          <td className="num">{summary?.rejected ?? NOT_AVAILABLE}</td>
+                          <td className="num">{summary?.potential_match ?? NOT_AVAILABLE}</td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

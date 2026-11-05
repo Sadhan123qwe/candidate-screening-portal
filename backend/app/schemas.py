@@ -115,6 +115,15 @@ class JobOut(BaseModel):
     application_counts: ApplicationCounts
 
 
+class JobSummaryOut(BaseModel):
+    job_id: int
+    applied: int
+    shortlisted: int
+    rejected: int
+    # Null when no model is loaded, because stored labels can't be trusted then.
+    potential_match: int | None
+
+
 # --- Candidates ---
 
 

@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useApplications, useApplicationSummary } from "../api/applications";
+import { APPLICATION_SORTS, useApplications, useApplicationSummary, useExportApplications } from "../api/applications";
 import { useJobs } from "../api/jobs";
 import { useStats } from "../api/stats";
 import { APPLICATION_STATUSES, PREDICTION_LABELS } from "../api/types";
@@ -13,6 +13,7 @@ import { Button } from "../components/ui/Button";
 import { Select } from "../components/ui/Controls";
 import { FilterChip } from "../components/ui/FilterChip";
 import { GlassCard } from "../components/ui/GlassCard";
+import { ErrorNotice } from "../components/ui/Notice";
 import { PageHeader } from "../components/ui/PageHeader";
 
 const PAGE_SIZE = 25;
@@ -26,6 +27,7 @@ export function ApplicationsPage() {
   const status = params.get("status") ?? "";
   const prediction = params.get("prediction") ?? "";
   const search = params.get("search") ?? "";
+  const sort = params.get("sort") ?? "";
   const page = Number(params.get("page")) || 1;
 
   const sharedFilters = {
@@ -36,7 +38,9 @@ export function ApplicationsPage() {
 
   const jobs = useJobs();
   const stats = useStats();
-  const applications = useApplications({ ...sharedFilters, status: status || undefined, page, page_size: PAGE_SIZE });
+  const listFilters = { ...sharedFilters, status: status || undefined, sort: sort || undefined };
+  const applications = useApplications({ ...listFilters, page, page_size: PAGE_SIZE });
+  const exportApplications = useExportApplications();
   const summary = useApplicationSummary(sharedFilters);
 
   const updateParams = useCallback(
@@ -74,13 +78,19 @@ export function ApplicationsPage() {
             : "The prediction is a hint; you set the status."
         }
         aside={
-          <Button variant="primary" onClick={() => setIsAssigning(true)}>
-            + Assign candidate
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button disabled={exportApplications.isPending} onClick={() => exportApplications.mutate(listFilters)}>
+              {exportApplications.isPending ? "Exporting..." : "Export CSV"}
+            </Button>
+            <Button variant="primary" onClick={() => setIsAssigning(true)}>
+              + Assign candidate
+            </Button>
+          </div>
         }
       />
 
       <div className="page-stack">
+        <ErrorNotice message={exportApplications.error?.message} />
         <div role="group" aria-label="Filter by status count" className="flex flex-wrap gap-2">
           {statusChips.map((chip) => (
             <FilterChip
@@ -141,6 +151,19 @@ export function ApplicationsPage() {
             {PREDICTION_LABELS.map((value) => (
               <option key={value} value={value}>
                 {value}
+              </option>
+            ))}
+          </Select>
+          <Select
+            id="filter-sort"
+            label="Sort"
+            aria-label="Sort applications"
+            value={sort || APPLICATION_SORTS[0].value}
+            onChange={(event) => updateParams({ sort: event.target.value === APPLICATION_SORTS[0].value ? "" : event.target.value })}
+          >
+            {APPLICATION_SORTS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
             ))}
           </Select>

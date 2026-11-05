@@ -44,6 +44,14 @@ export interface Job {
   application_counts: ApplicationCounts;
 }
 
+export interface JobSummary {
+  job_id: number;
+  applied: number;
+  shortlisted: number;
+  rejected: number;
+  potential_match: number | null;
+}
+
 export interface JobInput {
   title: string;
   description: string;

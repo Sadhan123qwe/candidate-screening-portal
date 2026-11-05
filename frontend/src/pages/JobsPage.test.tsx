@@ -19,16 +19,30 @@ const JOB: Job = {
   application_counts: { Applied: 40, Shortlisted: 1, Rejected: 1 },
 };
 
+const SUMMARY = [{ job_id: 1, applied: 40, shortlisted: 3, rejected: 1, potential_match: 17 }];
+
 describe("JobsPage", () => {
-  it("lists jobs with their skills, minimum experience and total applications", async () => {
-    mockFetch(() => jsonResponse([JOB]));
+  it("lists jobs with their skills, minimum experience and counts from the summary", async () => {
+    mockFetch((url) => jsonResponse(url.pathname === "/api/jobs/summary" ? SUMMARY : [JOB]));
     renderWithProviders(<JobsPage />);
 
     expect(await screen.findByRole("link", { name: "React Intern" })).toHaveAttribute("href", "/jobs/1");
     expect(screen.getByText("1 open internship. Required skills drive the prediction most.")).toBeInTheDocument();
     expect(screen.getByText("javascript")).toHaveClass("skill-tag");
     expect(screen.getByText("0.5 yr")).toHaveClass("num");
-    expect(screen.getByText("42")).toHaveClass("num");
+    for (const count of ["40", "3", "1", "17"]) {
+      expect(await screen.findByText(count)).toHaveClass("num");
+    }
+    expect(screen.getByRole("columnheader", { name: "Potential match" })).toBeInTheDocument();
+  });
+
+  it("shows a dash rather than zero when no model can give potential matches", async () => {
+    const noModel = [{ ...SUMMARY[0], potential_match: null }];
+    mockFetch((url) => jsonResponse(url.pathname === "/api/jobs/summary" ? noModel : [JOB]));
+    renderWithProviders(<JobsPage />);
+
+    expect(await screen.findByText("40")).toBeInTheDocument();
+    expect(screen.getByText("\u2013")).toHaveClass("num");
   });
 
   it("shows a skill that is both required and preferred as an inline error, and doesn't submit", async () => {
