@@ -74,7 +74,7 @@ export function CandidatesPage() {
             {(list) => (
               <GlassCard padding="none" className="overflow-hidden">
                 <div className="table-scroll">
-                  <table className="data-table min-w-[620px]">
+                  <table className="data-table min-w-[590px]">
                     <thead>
                       <tr>
                         <th scope="col">Candidate</th>
