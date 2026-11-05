@@ -86,8 +86,8 @@ More detail is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), and the reasonin
 ## Prerequisites
 
 - Python 3.11+
-- Node 20+. CI runs the frontend tests and build on Node 20. Vitest officially lists Node 22.12+, so use that if a
-  future update stops working on 20.
+- Node 20+ to run the app, and CI runs the tests and build on Node 20. Vitest officially lists Node 22.12+. Passing runs
+  work on 20, but when a test fails, the final error summary crashes there, so use 22.12+ to debug a failing test.
 
 ## Setup (PowerShell)
 

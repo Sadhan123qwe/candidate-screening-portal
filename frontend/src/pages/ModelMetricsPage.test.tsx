@@ -1,5 +1,5 @@
 import { screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import type { ClassificationResult, ModelMetrics } from "../api/types";
 import { jsonResponse, mockFetch, renderWithProviders } from "../test/helpers";
 import { ModelMetricsPage } from "./ModelMetricsPage";
@@ -78,6 +78,12 @@ function makeMetrics(test: ModelMetrics["test"]): ModelMetrics {
 }
 
 describe("ModelMetricsPage", () => {
+  // The chart library is loaded lazily, and compiling it from cold takes seconds. Without this,
+  // whichever test happens to trigger it can pass the time limit on a fresh install, as in CI.
+  beforeAll(async () => {
+    await import("../components/ModelCharts");
+  }, 60_000);
+
   it("takes every number from the API, with none hard-coded", async () => {
     const model = result({ precision: 0.8, recall: 0.5, f1: 0.61, confusion_matrix: { tp: 20, fn: 5, fp: 15, tn: 60 } });
     const baseline = result({ precision: 0.75, recall: 0.5, f1: 0.65, confusion_matrix: { tp: 20, fn: 5, fp: 18, tn: 57 } });

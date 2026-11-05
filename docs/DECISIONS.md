@@ -88,8 +88,10 @@ Every non-obvious choice and the reason for it. Newest thinking is grouped by to
 
 ## Frontend
 
-- **CI uses Node 20.** Every Vitest release that runs on Node 18 has a critical `npm audit` finding, and the fixed
-  releases list Node 22.12+ as their requirement. The tests and build do pass on Node 20 in practice, so CI runs them there.
+- **CI uses Node 20, which Vitest doesn't officially support.** Every Vitest release that runs on Node 18 has a critical
+  `npm audit` finding, and the fixed releases list Node 22.12+. On Node 20 passing runs work and failures still fail the
+  job and name the test, but Vitest's error summary then crashes on `Map.groupBy`. Moving CI to Node 22 is a one-line
+  change that would give full failure output.
 - **CI checks the report before retraining, then rebuilds it after.** Numbers could differ slightly on another operating
   system, which isn't drift. Checking the committed report against the committed artifacts catches real drift on any
   platform, without failing on that difference.
